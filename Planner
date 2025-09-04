@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Visual Rota Generator</title>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --ink:#1f2937;
+    --grid:#d9dde3;
+    --muted:#6b7280;
+    --chip-text:#111827;
+    --card:#ffffff;
+    --accent:#1f6feb;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:18px; background:var(--bg); color:var(--ink);
+    font:15px/1.4 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial;
+  }
+  h1{margin:0 0 10px; font-size:20px}
+  .wrap{max-width:1100px; margin:0 auto}
+  .panel{
+    background:var(--card); border:1px solid var(--grid); border-radius:10px; padding:14px; margin:0 0 14px;
+  }
+  label{display:block; font-size:12px; color:var(--muted); margin:6px 0 4px}
+  input, select, textarea, button{
+    width:100%; padding:8px 10px; border:1px solid var(--grid); border-radius:8px; background:#fff; color:var(--ink);
+    outline:none;
+  }
+  textarea{min-height:74px; resize:vertical}
+  .row{display:grid; gap:10px}
+  @media(min-width:860px){ .row{grid-template-columns: 360px 1fr} }
+  .inline{display:flex; gap:8px}
+  .inline > div{flex:1}
+  .btn{cursor:pointer; width:auto; border:1px solid var(--accent); color:#fff; background:var(--accent); font-weight:600}
+  .btn.secondary{background:#fff;color:var(--accent)}
+  .muted{color:var(--muted)}
+  .grid{overflow:auto; border:1px solid var(--grid); border-radius:10px; background:#fff}
+  table{border-collapse:separate; border-spacing:0; width:100%}
+  th, td{
+    border-right:1px solid var(--grid);
+    border-bottom:1px solid var(--grid);
+    padding:6px 8px; text-align:left; white-space:nowrap; font-variant-numeric:tabular-nums;
+  }
+  th:first-child, td:first-child{border-left:0}
+  thead th{position:sticky; top:0; background:#f7f8fa; z-index:1}
+  .chip{
+    display:inline-block; border-radius:6px; padding:3px 8px; border:1px solid rgba(0,0,0,.07);
+    background:#eee; color:var(--chip-text); font-weight:700; letter-spacing:.2px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  .section-title{font-weight:700; margin:10px 0 6px}
+  .small{font-size:12px}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New",monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Visual Rota Generator</h1>
+  <div class="row">
+    <div class="panel">
+      <div class="inline">
+        <div>
+          <label>Start date</label>
+          <input type="date" id="startDate">
+        </div>
+        <div>
+          <label>Weeks to generate</label>
+          <input type="number" id="weeks" value="4" min="1" max="52">
+        </div>
+      </div>
+
+      <div class="inline" style="margin-top:6px">
+        <div>
+          <label>Shift model (X on / Y off)</label>
+          <div class="inline">
+            <input type="number" id="onDays" value="4" min="1"><input type="number" id="offDays" value="2" min="0">
+          </div>
+        </div>
+        <div>
+          <label>Runs per day (columns)</label>
+          <input type="number" id="runs" value="3" min="1" max="10">
+        </div>
+      </div>
+
+      <label style="margin-top:6px">Driver names (one per line)</label>
+      <textarea id="names">Mark
+Yousef
+Maruanne
+Darek
+Rob</textarea>
+
+      <div class="inline" style="margin-top:10px">
+        <button class="btn" id="build">Build rota</button>
+        <button class="btn secondary" id="csv">Export CSV</button>
+      </div>
+      <p class="small muted" id="note"></p>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">Rota (visual)</div>
+      <div class="grid" id="rotaGrid"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Summary (Run days per driver)</div>
+    <div class="grid" id="summaryGrid"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  // Default start date: first of next month (like your screenshot)
+  (function(){
+    const d = new Date();
+    d.setMonth(d.getMonth()+1,1);
+    $('startDate').value = toISO(d);
+  })();
+
+  // Fixed colours to match your screenshot for those names; fallback to palette hashing for others
+  const fixedColours = {
+    'mark':   '#f7c5c6', // light red
+    'yousef': '#ffe38c', // light yellow
+    'maruanne': '#c8efd2', // light green
+    'darek':  '#cfe3ff', // light blue
+    'rob':    '#cfcfd3', // light gray
+  };
+  const palette = ['#ffd6a5','#fdffb6','#caffbf','#9bf6ff','#bdb2ff','#ffc6ff','#cdd6f4','#f1f5f9','#e2e8f0'];
+
+  function colourFor(name){
+    const key = (name||'').trim().toLowerCase();
+    if(fixedColours[key]) return fixedColours[key];
+    // hash
+    let h=0; for(let i=0;i<key.length;i++) h = (h*31 + key.charCodeAt(i))>>>0;
+    return palette[h % palette.length];
+  }
+
+  $('build').addEventListener('click', build);
+  $('csv').addEventListener('click', exportCSV);
+
+  function build(){
+    const start = parseDate($('startDate').value);
+    const weeks = clamp(int($('weeks').value,4),1,104);
+    const totalDays = weeks*7;
+    const X = clamp(int($('onDays').value,4),1,366);
+    const Y = clamp(int($('offDays').value,2),0,366);
+    const R = clamp(int($('runs').value,3),1,10);
+    const names = cleanNames($('names').value);
+    if(names.length === 0){ alert('Please enter at least one driver name.'); return; }
+
+    // Build staggered offsets to meet at least R on-duty each day
+    const plan = buildStaggeredPlan(X,Y,R);
+    if(plan.offsets.length > names.length){
+      // If fewer names than required drivers, extend with placeholders
+      while(names.length < plan.offsets.length) names.push('Driver '+(names.length+1));
+    }
+    const drivers = plan.offsets.map((off,i)=>({name:names[i], offset:off}));
+
+    // For each day, compute who is on-duty and assign to runs (balanced round-robin)
+    const L = X+Y;
+    const days = [];
+    const rrPos = new Map(); // per day tie-breaker continuity
+    const assignCounts = Object.fromEntries(drivers.map(d=>[d.name,0]));
+    for(let d=0; d<totalDays; d++){
+      const date = addDays(start,d);
+      const weekday = date.toLocaleDateString(undefined,{weekday:'short'});
+      const onDuty = drivers.filter(dr => ((d + dr.offset) % L) < X).map(dr=>dr.name);
+
+      // rotate start index so people share Run One/Two/Three fairly across days
+      const startIdx = rrPos.get('k') || 0;
+      const rotated = onDuty.slice(startIdx).concat(onDuty.slice(0,startIdx));
+      rrPos.set('k', (startIdx+1) % Math.max(onDuty.length,1));
+
+      const runs = [];
+      for(let r=0; r<R; r++){
+        const name = rotated[r % rotated.length];
+        runs.push(name || '');
+        if(name) assignCounts[name] = (assignCounts[name]||0)+1;
+      }
+      days.push({date, weekday, runs, onDuty});
+    }
+
+    renderRota(days, R);
+    renderSummary(assignCounts);
+
+    $('note').innerHTML = `Pattern <b>${X} on / ${Y} off</b> • Cycle ${X+Y}d • Drivers used: <b>${drivers.length}</b> • Weeks: ${weeks}`;
+    // Save for CSV
+    window.__rotaData = {days, R, counts:assignCounts};
+  }
+
+  function renderRota(days, R){
+    const headings = ['Date','Day'].concat(Array.from({length:R},(_,i)=>`Run ${['One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten'][i]||('Run '+(i+1))}`));
+    let html = '<table><thead><tr>';
+    headings.forEach(h => html += `<th>${h}</th>`);
+    html += '</tr></thead><tbody>';
+
+    for(const row of days){
+      html += '<tr>';
+      html += `<td>${toISO(row.date)}</td>`;
+      html += `<td>${row.weekday}</td>`;
+      for(let i=0;i<R;i++){
+        const name = row.runs[i] || '';
+        html += `<td>${name ? chipHTML(name) : ''}</td>`;
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    $('rotaGrid').innerHTML = html;
+  }
+
+  function renderSummary(counts){
+    const rows = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    let html = '<table><thead><tr><th>Driver</th><th>Run days</th></tr></thead><tbody>';
+    for(const [name, n] of rows){
+      html += `<tr><td>${chipHTML(name)}</td><td>${n}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    $('summaryGrid').innerHTML = html;
+  }
+
+  function chipHTML(name){
+    const bg = colourFor(name);
+    return `<span class="chip" style="background:${bg}">${escapeHTML(name)}</span>`;
+  }
+
+  function exportCSV(){
+    const data = window.__rotaData;
+    if(!data){ alert('Build a rota first.'); return; }
+    const {days, R, counts} = data;
+    let csv = 'Date,Day,' + Array.from({length:R},(_,i)=>`Run ${i+1}`).join(',') + '\n';
+    for(const d of days){
+      csv += [
+        toISO(d.date),
+        d.weekday,
+        ...d.runs.map(x=>`"${x||''}"`)
+      ].join(',') + '\n';
+    }
+    csv += '\nSummary,Run days per driver\nDriver,Run days\n';
+    for(const [name,n] of Object.entries(counts).sort((a,b)=>b[1]-a[1])){
+      csv += `"${name}",${n}\n`;
+    }
+    const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='rota.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---- rota core (staggered offsets) ----
+  function buildStaggeredPlan(X,Y,R){
+    const L = X+Y;
+    const patterns = [];
+    for(let off=0; off<L; off++){
+      patterns.push({off, vec: Array.from({length:L},(_,d)=>(((d+off)%L)<X)?1:0)});
+    }
+    let selected=[], cov=new Array(L).fill(0);
+    while(min(cov) < R){
+      let best=null;
+      for(const p of patterns){
+        if(selected.some(s=>s.off===p.off)) continue;
+        const merged = cov.map((v,i)=>v + p.vec[i]);
+        const score = min(merged);
+        const flatness = variance(merged);
+        if(!best || score>best.score || (score===best.score && flatness<best.flatness))
+          best = {p, merged, score, flatness};
+      }
+      if(!best) break;
+      selected.push(best.p); cov = best.merged;
+      if(selected.length > 2000) break; // safety
+    }
+    return {offsets:selected.map(s=>s.off)};
+  }
+
+  // ---- utils ----
+  function toISO(d){ return d.toISOString().slice(0,10); }
+  function parseDate(s){ if(!s) return new Date(); const d=new Date(s+'T00:00:00'); return isNaN(+d)?new Date():d; }
+  function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+  function int(v,def){ const n=parseInt(v,10); return isFinite(n)?n:def; }
+  function clamp(n,lo,hi){ return Math.max(lo, Math.min(hi, n)); }
+  function min(a){ return a.reduce((m,v)=>v<m?v:m, Infinity); }
+  function variance(a){ const m=a.reduce((s,v)=>s+v,0)/a.length; return a.reduce((s,v)=>s+(v-m)*(v-m),0)/a.length; }
+  function cleanNames(s){ return (s||'').split(/\r?\n/).map(x=>x.trim()).filter(Boolean); }
+  function escapeHTML(s){ return (s+'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+})();
+</script>
+</body>
+</html>

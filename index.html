@@ -22,23 +22,51 @@
   .inline > div{flex:1}
   .btn{cursor:pointer; width:auto; border:1px solid var(--accent); color:#fff; background:var(--accent); font-weight:600}
   .btn.secondary{background:#fff;color:var(--accent)}
+  .btn.small{padding:6px 10px; font-size:12px}
   .muted{color:var(--muted)}
   .grid{overflow:auto; border:1px solid var(--grid); border-radius:10px; background:#fff}
   table{border-collapse:separate; border-spacing:0; width:100%}
   th, td{border-right:1px solid var(--grid); border-bottom:1px solid var(--grid); padding:6px 8px; text-align:left; white-space:nowrap; font-variant-numeric:tabular-nums;}
   thead th{position:sticky; top:0; background:#f7f8fa; z-index:1}
-  .chip{ display:inline-block; border-radius:6px; padding:3px 8px; border:1px solid rgba(0,0,0,.07); font-weight:700; letter-spacing:.2px; box-shadow:inset 0 1px 0 rgba(255,255,255,.6); }
+  .chip{ display:inline-block; border-radius:6px; padding:3px 8px; border:1px solid rgba(0,0,0,.07); font-weight:700; letter-spacing:.2px; box-shadow:inset 0 1px 0 rgba(255,255,255,.6); cursor:pointer; }
   .small{font-size:12px}
   .section-title{font-weight:700;margin:10px 0 6px}
   tr.weekend td{background:var(--weekend)}
   .chip:hover{opacity:0.9}
   .error{color:#ef4444; font-size:12px; margin:4px 0}
+  .ok{color:#047857; font-size:12px; margin:4px 0}
+
+  /* Holiday visual */
+  .chip.holiday{
+    background:#ffe2e2 !important;
+    border-color:#fca5a5;
+    position:relative;
+  }
+  .chip.holiday::after{
+    content:" Holiday";
+    font-size:10px;
+    font-weight:700;
+    margin-left:6px;
+    color:#b91c1c;
+  }
+
+  /* Tiny floating action menu */
+  .chip-menu{
+    position:absolute; z-index:10; background:#fff; border:1px solid var(--grid); border-radius:8px;
+    padding:6px; box-shadow:0 6px 20px rgba(0,0,0,.12);
+    display:none; min-width:180px;
+  }
+  .chip-menu select, .chip-menu button{ width:100%; margin:4px 0; }
+
+  /* Holidays list */
+  #holidayList table td, #holidayList table th{ white-space:nowrap; }
+  .danger{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Davenport Transport Solutions Shift Rota Planner</h1>
- 
+
   <div class="row">
     <div class="panel">
       <div class="inline">
@@ -60,7 +88,7 @@
           <input type="number" id="weeks" value="4" min="1" max="104">
         </div>
       </div>
- 
+
       <div class="inline">
         <div>
           <label>Pattern preset</label>
@@ -76,7 +104,7 @@
           <input type="number" id="runs" value="3" min="1" max="10">
         </div>
       </div>
- 
+
       <div class="inline">
         <div>
           <label>Primary / relief split (names)</label>
@@ -94,7 +122,7 @@
           </select>
         </div>
       </div>
- 
+
       <div class="inline">
         <div>
           <label>Primary route assignment</label>
@@ -108,7 +136,7 @@
           <input type="number" id="primarySwitchDays" value="2" min="1" max="7">
         </div>
       </div>
- 
+
       <div class="inline">
         <div>
           <label>Relief route assignment</label>
@@ -117,59 +145,133 @@
             <option value="fixed">Fixed to a route (spill to free)</option>
           </select>
         </div>
-        <div></div> <!-- Empty div to maintain layout -->
+        <div></div>
       </div>
- 
+
       <label>Driver names (one per line)</label>
       <textarea id="names">Mark
 Yousef
 Maruanne
 Darek
 Rob</textarea>
- 
+
       <div class="inline" style="margin-top:10px">
         <button class="btn" id="build">Build rota</button>
         <button class="btn secondary" id="csv">Export CSV</button>
       </div>
       <p class="error" id="error"></p>
+      <p class="ok" id="ok"></p>
       <p class="small muted" id="note"></p>
       <p class="small" id="blendSummary"></p>
       <p class="small" id="routeSummary"></p>
     </div>
- 
+
     <div class="panel">
       <div class="section-title">Rota (visual)</div>
       <div class="grid" id="rotaGrid"></div>
     </div>
   </div>
- 
+
   <div class="row">
     <div class="panel">
       <div class="section-title">Drivers (assignments)</div>
       <div class="grid" id="driverGrid"></div>
     </div>
- 
+
     <div class="panel">
       <div class="section-title">Summary (Run days per driver)</div>
       <div class="grid" id="summaryGrid"></div>
     </div>
   </div>
+
+  <!-- Holiday tools -->
+  <div class="panel">
+    <div class="section-title">Holiday tools</div>
+    <div class="inline">
+      <div>
+        <label>Driver</label>
+        <select id="holidayDriver"></select>
+      </div>
+      <div>
+        <label>Start date</label>
+        <input type="date" id="holidayStart">
+      </div>
+      <div>
+        <label>End date</label>
+        <input type="date" id="holidayEnd">
+      </div>
+    </div>
+    <div class="inline" style="margin-top:8px">
+      <button class="btn" id="addHoliday">Add holidays</button>
+      <button class="btn secondary" id="applyHoliday">Apply to rota</button>
+      <button class="btn secondary danger" id="clearHolidays">Clear all holidays</button>
+    </div>
+    <p class="small muted">Tip: For a single-day holiday, set Start = End.</p>
+    <div class="section-title" style="margin-top:12px">Holiday list</div>
+    <div class="grid" id="holidayList"></div>
+  </div>
 </div>
- 
+
+<!-- Floating chip action menu -->
+<div id="chipMenu" class="chip-menu" role="dialog" aria-hidden="true">
+  <select id="chipAction">
+    <option value="setHoliday">Set “Holiday” label</option>
+    <option value="clearHoliday">Clear “Holiday” label</option>
+  </select>
+  <button id="chipApply" class="btn">Apply</button>
+  <button id="chipCancel" class="btn secondary">Cancel</button>
+</div>
+
 <script>
 (function(){
   const $ = id => document.getElementById(id);
- 
-  // Utility functions
+
+  // ===== Distinct driver colors (no duplicates) =====
+  let nameIndex = {}; // driver name -> unique index
+
+  function getDriverClass(name){
+    const i = nameIndex[name];
+    return (i === undefined) ? 'driver-0' : `driver-${i}`;
+  }
+
+  function generateDriverStyles(names){
+    // Build stable unique list + index map
+    nameIndex = {};
+    const unique = [];
+    names.forEach(n => {
+      if (!nameIndex.hasOwnProperty(n)) {
+        nameIndex[n] = unique.length;
+        unique.push(n);
+      }
+    });
+
+    // Golden-angle hues for distinct colors
+    let css = '';
+    const GOLDEN_ANGLE = 137.508;
+    unique.forEach((name, i) => {
+      const hue = (i * GOLDEN_ANGLE) % 360;
+      const sat = 65; // %
+      const light = 72 - ((Math.floor(i / 24) % 2) * 12); // subtle alternation
+      css += `.chip.driver-${i}{background:hsl(${hue} ${sat}% ${light}%);color:#111827}`;
+    });
+
+    // Install/replace style tag
+    document.querySelectorAll('style[data-driver-styles]').forEach(s => s.remove());
+    const el = document.createElement('style');
+    el.setAttribute('data-driver-styles', '');
+    el.textContent = css;
+    document.head.appendChild(el);
+  }
+
+  // ===== Utilities =====
   function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
   function int(v, d = 0) { return parseInt(v, 10) || d; }
-  function cleanNames(text) { return text.split('\n').map(l => l.trim()).filter(Boolean); }
-  function hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i); return Math.abs(h); }
-  function addDays(date, days) { const result = new Date(date); result.setDate(result.getDate() + days); return result; }
+  function cleanNames(text) { return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean); }
+  function hash(s) { let h=0; for(let i=0;i<s.length;i++) h=(h*31 + s.charCodeAt(i))>>>0; return Math.abs(h); }
+  function addDays(date, days) { const r = new Date(date); r.setDate(r.getDate() + days); return r; }
   function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
   function toISO(d) { return d.toISOString().slice(0, 10); }
-
-  // Automatic start date
+  function between(dateStr, startStr, endStr) { return dateStr >= startStr && dateStr <= endStr; }
   function computeStartDate(mode) {
     const d = new Date();
     if (mode === 'today') return stripTime(d);
@@ -177,395 +279,476 @@ Rob</textarea>
     const x = new Date(d), wd = x.getDay(), diff = (1 - wd + 7) % 7; x.setDate(x.getDate() + diff); return stripTime(x); // next Monday
   }
   function updateStartDateDisplay() {
-    try {
-      const mode = $('startMode').value;
-      if (mode !== 'custom') {
-        $('startDateDisplay').value = toISO(computeStartDate(mode));
-        $('startDateDisplay').setAttribute('readonly', '');
-      } else {
-        $('startDateDisplay').removeAttribute('readonly');
-        if (!$('startDateDisplay').value) $('startDateDisplay').value = toISO(stripTime(new Date()));
-      }
-    } catch (e) {
-      console.error('Error in updateStartDateDisplay:', e);
-      $('error').textContent = 'Error setting start date. Check console for details.';
+    const mode = $('startMode').value;
+    if (mode !== 'custom') {
+      $('startDateDisplay').value = toISO(computeStartDate(mode));
+      $('startDateDisplay').setAttribute('readonly', '');
+    } else {
+      $('startDateDisplay').removeAttribute('readonly');
+      if (!$('startDateDisplay').value) $('startDateDisplay').value = toISO(stripTime(new Date()));
     }
   }
+  $('startMode').addEventListener('change', updateStartDateDisplay);
+  updateStartDateDisplay();
 
-  // Color palette for drivers
-  const colorPalette = [
-    '#ffe082', '#a5d6a7', '#90caf9', '#f48fb1', '#ce93d8',
-    '#ffccbc', '#b2ebf2', '#ffab91', '#c5e1a5', '#b39ddb',
-    '#fff59d', '#81d4fa', '#f06292', '#e6ee9c', '#80deea'
-  ];
+  function setError(msg){ $('error').textContent = msg || ''; }
+  function setOk(msg){ $('ok').textContent = msg || ''; if(msg) setTimeout(()=>{$('ok').textContent='';}, 2500); }
 
-  function getDriverClass(name) {
-    const index = hash(name) % colorPalette.length;
-    return `driver-${index}`;
-  }
+  // ===== Global state =====
+  let rota = []; // [{dateStr, dayName, isWeekend, assigned:[name|null], spares:"a, b"}]
+  let runsGlobal = 0;
+  let renderCtx = null; // for re-render
+  let holidays = []; // [{driver, start:'YYYY-MM-DD', end:'YYYY-MM-DD'}]
 
-  // Dynamically generate CSS for driver colors
-  function generateDriverStyles(names) {
-    try {
-      let style = '';
-      names.forEach(name => {
-        const index = hash(name) % colorPalette.length;
-        style += `
-          .chip.driver-${index} { 
-            background: ${colorPalette[index]}; 
-            color: #111827; 
-          }
-        `;
-      });
-      const existingStyles = document.head.querySelectorAll('style[data-driver-styles]');
-      existingStyles.forEach(s => s.remove());
-      const styleElement = document.createElement('style');
-      styleElement.setAttribute('data-driver-styles', '');
-      styleElement.textContent = style;
-      document.head.appendChild(styleElement);
-    } catch (e) {
-      console.error('Error in generateDriverStyles:', e);
-      $('error').textContent = 'Error generating driver styles. Check console for details.';
+  // ===== Build rota =====
+  $('build').addEventListener('click', buildRota);
+
+  function buildRota(){
+    setError(''); $('ok').textContent='';
+    const names = cleanNames($('names').value);
+    if(names.length<1){ return setError('Please provide at least one driver name.'); }
+    generateDriverStyles(names);
+    populateHolidayDriverOptions(names);
+
+    const runs  = clamp(int($('runs').value,3),1,10);
+    const weeks = clamp(int($('weeks').value,4),1,104);
+    const days  = weeks*7;
+    const startDate = stripTime(new Date($('startDateDisplay').value));
+    if(isNaN(startDate.getTime())) return setError('Invalid start date.');
+
+    const preset = $('patternPreset').value;
+    let primOn, primOff, relOn, relOff, isBlend = preset.includes('_');
+    if(preset==='p42'){ primOn=4; primOff=2; }
+    else if(preset==='p44'){ primOn=4; primOff=4; }
+    else if(preset==='p42_r44'){ primOn=4; primOff=2; relOn=4; relOff=4; }
+    else if(preset==='p44_r42'){ primOn=4; primOff=4; relOn=4; relOff=2; }
+
+    const nameSplit = $('nameSplit').value;
+    const useAll = $('useAll').value==='yes';
+    const primaryRouteMode = $('primaryRouteMode').value;
+    const reliefRouteMode  = $('reliefRouteMode').value;
+    const primarySwitchDays = clamp(int($('primarySwitchDays').value,2),1,7);
+
+    // Choose primary count
+    let numPrim;
+    if(!isBlend) numPrim = names.length;
+    else if(nameSplit==='auto') numPrim = runs;
+    else if(nameSplit==='firstHalf') numPrim = Math.floor(names.length/2);
+    else numPrim = 1;
+
+    if(numPrim>names.length) return setError('Not enough drivers for the selected primary count.');
+    if(primaryRouteMode==='fixed' && numPrim!==runs) return setError('For fixed primary routes, primaries must equal number of routes.');
+
+    const primaries = names.slice(0,numPrim);
+    let reliefs = names.slice(numPrim);
+    if(!useAll && isBlend){
+      const offFraction = primOff/(primOn+primOff);
+      const offSlotsPerDay = numPrim * offFraction;
+      const relFraction = relOn/(relOn+relOff);
+      const relNeeded = Math.ceil(offSlotsPerDay / relFraction + 0.5);
+      reliefs = reliefs.slice(0, relNeeded);
     }
-  }
 
-  // Event listeners
-  try {
-    $('startMode').addEventListener('change', updateStartDateDisplay);
-    $('build').addEventListener('click', () => {
-      console.log('Build rota button clicked');
-      buildRota();
-    });
-    updateStartDateDisplay();
-  } catch (e) {
-    console.error('Error setting up event listeners:', e);
-    $('error').textContent = 'Error initializing event listeners. Check console for details.';
-  }
+    // Build drivers
+    const drivers=[];
+    primaries.forEach(n=>drivers.push({name:n,isPrimary:true,on:primOn,off:primOff,cycle:primOn+primOff}));
+    reliefs.forEach(n=>drivers.push({name:n,isPrimary:false,on:relOn,off:relOff,cycle:relOn+relOff}));
 
-  let rota = []; // global for export
-
-  function buildRota() {
-    try {
-      const error = $('error');
-      error.textContent = '';
-      console.log('Starting buildRota');
-      const names = cleanNames($('names').value);
-      if (names.length < 1) {
-        error.textContent = 'Please provide at least one driver name.';
-        console.error('No driver names provided');
-        return;
-      }
-      console.log('Driver names:', names);
-      generateDriverStyles(names);
-      const runs = clamp(int($('runs').value, 3), 1, 10);
-      const weeks = clamp(int($('weeks').value, 4), 1, 104);
-      const days = weeks * 7;
-      const startDate = stripTime(new Date($('startDateDisplay').value));
-      if (isNaN(startDate.getTime())) {
-        error.textContent = 'Invalid start date.';
-        console.error('Invalid start date:', $('startDateDisplay').value);
-        return;
-      }
-      console.log('Parameters - runs:', runs, 'weeks:', weeks, 'startDate:', startDate);
-      const pattern = $('patternPreset').value;
-      let primOn, primOff, relOn, relOff;
-      let isBlend = pattern.includes('_');
-      if (pattern === 'p42') {
-        primOn = 4; primOff = 2;
-      } else if (pattern === 'p44') {
-        primOn = 4; primOff = 4;
-      } else if (pattern === 'p42_r44') {
-        primOn = 4; primOff = 2; relOn = 4; relOff = 4;
-      } else if (pattern === 'p44_r42') {
-        primOn = 4; primOff = 4; relOn = 4; relOff = 2;
-      }
-      console.log('Pattern:', pattern, 'isBlend:', isBlend);
-      const nameSplit = $('nameSplit').value;
-      const useAll = $('useAll').value === 'yes';
-      const primaryRouteMode = $('primaryRouteMode').value;
-      const reliefRouteMode = $('reliefRouteMode').value;
-      const primarySwitchDays = clamp(int($('primarySwitchDays').value, 2), 1, 7);
-      console.log('Settings - nameSplit:', nameSplit, 'useAll:', useAll, 'primaryRouteMode:', primaryRouteMode, 'reliefRouteMode:', reliefRouteMode, 'primarySwitchDays:', primarySwitchDays);
-      let numPrim;
-      if (!isBlend) {
-        numPrim = names.length;
-      } else {
-        if (nameSplit === 'auto') {
-          numPrim = runs;
-        } else if (nameSplit === 'firstHalf') {
-          numPrim = Math.floor(names.length / 2);
-        } else if (nameSplit === 'firstOne') {
-          numPrim = 1;
-        }
-      }
-      if (numPrim > names.length) {
-        error.textContent = 'Not enough drivers for the selected number of primary drivers.';
-        console.error('Not enough drivers: numPrim=', numPrim, 'names.length=', names.length);
-        return;
-      }
-      if (primaryRouteMode === 'fixed' && numPrim !== runs) {
-        error.textContent = 'For fixed primary routes, number of primaries must equal number of routes.';
-        console.error('Fixed primary routes require numPrim === runs:', numPrim, runs);
-        return;
-      }
-      let primaries = names.slice(0, numPrim);
-      let reliefs = names.slice(numPrim);
-      if (!useAll && isBlend) {
-        const offFraction = primOff / (primOn + primOff);
-        const offSlotsPerDay = numPrim * offFraction;
-        const relFraction = relOn / (relOn + relOff);
-        const relNeeded = Math.ceil(offSlotsPerDay / relFraction + 0.5);
-        reliefs = reliefs.slice(0, relNeeded);
-      }
-      const allDrivers = primaries.concat(reliefs);
-      console.log('Primaries:', primaries, 'Reliefs:', reliefs);
-      const drivers = [];
-      primaries.forEach(name => drivers.push({name, isPrimary: true, on: primOn, off: primOff, cycle: primOn + primOff}));
-      reliefs.forEach(name => drivers.push({name, isPrimary: false, on: relOn, off: relOff, cycle: relOn + relOff}));
-      // Check feasibility
-      const primWorkFraction = primOn / (primOn + primOff);
-      const relWorkFraction = isBlend ? relOn / (relOn + relOff) : primWorkFraction;
-      const avgWorkingDrivers = (primaries.length * primWorkFraction) + (reliefs.length * relWorkFraction);
-      if (avgWorkingDrivers < runs) {
-        const minDriversNeeded = Math.ceil(runs / Math.max(primWorkFraction, relWorkFraction));
-        error.textContent = `Infeasible schedule: only ${avgWorkingDrivers.toFixed(2)} drivers available on average, need at least ${runs}. Try adding ${minDriversNeeded - names.length} more drivers or reducing routes.`;
-        console.error('Infeasible schedule: avgWorkingDrivers=', avgWorkingDrivers, 'runs=', runs, 'minDriversNeeded=', minDriversNeeded);
-        return;
-      }
-      console.log('Feasibility check passed: avgWorkingDrivers=', avgWorkingDrivers, 'runs=', runs);
-      let chosenOffsets = [];
-      let found = false;
-      const maxTries = 200000;
-      for (let t = 0; t < maxTries; t++) {
-        const offsets = drivers.map(d => Math.floor(Math.random() * d.cycle));
-        let good = true;
-        for (let d = 0; d < days; d++) {
-          const working = drivers.filter((dr, i) => ((d + offsets[i]) % dr.cycle) < dr.on);
-          if (working.length < runs) {
-            good = false;
-            break;
-          }
-        }
-        if (good) {
-          chosenOffsets = offsets;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        const minDriversNeeded = Math.ceil(runs / Math.max(primWorkFraction, relWorkFraction));
-        error.textContent = `Cannot find a valid schedule after ${maxTries} tries. Need at least ${minDriversNeeded} drivers for ${runs} routes with current shift patterns. Try adding ${minDriversNeeded - names.length} drivers, reducing routes, or adjusting shift patterns.`;
-        console.error('Failed to find valid schedule after', maxTries, 'tries. minDriversNeeded=', minDriversNeeded);
-        return;
-      }
-      console.log('Schedule found with offsets:', chosenOffsets);
-      rota = [];
-      const primaryAssignments = new Map(primaries.map(p => [p, []]));
-      for (let d = 0; d < days; d++) {
-        const date = addDays(startDate, d);
-        const dayName = date.toLocaleString('en-us', { weekday: 'short' });
-        const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-        const working = drivers.filter((dr, i) => ((d + chosenOffsets[i]) % dr.cycle) < dr.on).map(dr => dr.name);
-        const primaryWorking = working.filter(name => primaries.includes(name));
-        const reliefWorking = working.filter(name => reliefs.includes(name));
-        let routeAssignments = new Array(runs).fill(null);
-        let freeRoutes = Array.from({length: runs}, (_, i) => i);
-        if (primaryRouteMode === 'fixed') {
-          for (let p = 0; p < primaries.length; p++) {
-            const name = primaries[p];
-            if (working.includes(name)) {
-              routeAssignments[p] = name;
-              primaryAssignments.get(name).push(p);
-              freeRoutes = freeRoutes.filter(r => r !== p);
-            } else {
-              primaryAssignments.get(name).push(null);
-            }
-          }
-        } else {
-          let sortedPrim = [...primaryWorking].sort((a, b) => primaries.indexOf(a) - primaries.indexOf(b));
-          let availableRoutes = [...freeRoutes];
-          for (let p = 0; p < sortedPrim.length && availableRoutes.length > 0; p++) {
-            const name = sortedPrim[p];
-            const prevAssignments = primaryAssignments.get(name);
-            let i = prevAssignments.length - 1;
-            let consecutive = 0;
-            let lastRoute = null;
-            if (i >= 0) {
-              while (i >= 0 && prevAssignments[i] === null) i--;
-              if (i >= 0) {
-                lastRoute = prevAssignments[i];
-                consecutive = 1;
-                i--;
-                while (i >= 0 && prevAssignments[i] !== null && prevAssignments[i] === lastRoute) {
-                  consecutive++;
-                  i--;
-                }
-              }
-            }
-            let route;
-            if (consecutive > 0 && consecutive < primarySwitchDays && lastRoute !== null && availableRoutes.includes(lastRoute)) {
-              route = lastRoute;
-            } else {
-              route = getNewRoute(availableRoutes, lastRoute, date, p, runs);
-            }
-            routeAssignments[route] = name;
-            primaryAssignments.get(name).push(route);
-            availableRoutes = availableRoutes.filter(r => r !== route);
-          }
-          freeRoutes = availableRoutes;
-          primaries.forEach(name => {
-            if (!primaryWorking.includes(name)) {
-              primaryAssignments.get(name).push(null);
-            }
-          });
-        }
-        if (freeRoutes.length > 0) {
-          let sortedRel = [...reliefWorking].sort((a, b) => reliefs.indexOf(a) - reliefs.indexOf(b));
-          let availableRoutes = [...freeRoutes];
-          for (let p = 0; p < sortedRel.length && availableRoutes.length > 0; p++) {
-            let route;
-            if (reliefRouteMode === 'fixed') {
-              const preferred = p % runs;
-              route = availableRoutes.includes(preferred) ? preferred : availableRoutes[0];
-            } else {
-              const startR = hash(toISO(date)) % runs;
-              route = availableRoutes[(startR + p) % availableRoutes.length];
-            }
-            routeAssignments[route] = sortedRel[p];
-            availableRoutes = availableRoutes.filter(r => r !== route);
-          }
-          freeRoutes = availableRoutes;
-        }
-        const spares = working.filter(name => !routeAssignments.includes(name)).join(', ');
-        rota.push({dateStr: toISO(date), dayName, isWeekend, assigned: routeAssignments, spares});
-      }
-      let hasSpare = rota.some(item => item.spares);
-      let html = '<table><thead><tr><th>Date</th><th>Day</th>';
-      for (let r = 1; r <= runs; r++) html += '<th>Run ' + r + '</th>';
-      if (hasSpare) html += '<th>Spare</th>';
-      html += '</tr></thead><tbody>';
-      rota.forEach(item => {
-        html += '<tr' + (item.isWeekend ? ' class="weekend"' : '') + '><td>' + item.dateStr + '</td><td>' + item.dayName + '</td>';
-        item.assigned.forEach(a => html += '<td>' + (a ? '<span class="chip ' + getDriverClass(a) + '">' + a + '</span>' : '') + '</td>');
-        if (hasSpare) html += '<td>' + item.spares.split(', ').map(s => s ? `<span class="chip ${getDriverClass(s)}">${s}</span>` : '').join(', ') + '</td>';
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-      $('rotaGrid').innerHTML = html;
-      let runCounts = new Map(allDrivers.map(n => [n, 0]));
-      let spareCounts = new Map(allDrivers.map(n => [n, 0]));
-      rota.forEach(item => {
-        item.assigned.filter(a => a).forEach(a => runCounts.set(a, runCounts.get(a) + 1));
-        item.spares.split(', ').filter(s => s).forEach(s => spareCounts.set(s, spareCounts.get(s) + 1));
-      });
-      let sumHtml = '<table><thead><tr><th>Driver</th>';
-      if (hasSpare) sumHtml += '<th>Run days</th><th>Spare days</th><th>Total On-days</th>';
-      else sumHtml += '<th>Runs Covered (days)</th>';
-      sumHtml += '</tr></thead><tbody>';
-      allDrivers.forEach(n => {
-        const runsC = runCounts.get(n);
-        const sparesC = spareCounts.get(n);
-        sumHtml += '<tr><td><span class="chip ' + getDriverClass(n) + '">' + n + '</span></td>';
-        if (hasSpare) sumHtml += '<td>' + runsC + '</td><td>' + sparesC + '</td><td>' + (runsC + sparesC) + '</td>';
-        else sumHtml += '<td>' + runsC + '</td>';
-        sumHtml += '</tr>';
-      });
-      sumHtml += '</tbody></table>';
-      $('summaryGrid').innerHTML = sumHtml;
-      let driverHtml = '<table><thead><tr><th>Driver</th>';
-      for (let d = 0; d < days; d++) {
-        const date = addDays(startDate, d);
-        const dayShort = date.toLocaleString('en-us', { weekday: 'short' });
-        const dateShort = date.toLocaleString('en-us', { day: '2-digit', month: '2-digit' });
-        driverHtml += '<th>' + dayShort + '<br>' + dateShort + '</th>';
-      }
-      driverHtml += '</tr></thead><tbody>';
-      allDrivers.forEach(n => {
-        driverHtml += '<tr><td><span class="chip ' + getDriverClass(n) + '">' + n + '</span></td>';
-        rota.forEach(item => {
-          const route = item.assigned.findIndex(a => a === n) + 1;
-          if (route > 0) driverHtml += '<td>Run ' + route + '</td>';
-          else if (item.spares.split(', ').includes(n)) driverHtml += '<td>Spare</td>';
-          else driverHtml += '<td>Off</td>';
-        });
-        driverHtml += '</tr>';
-      });
-      driverHtml += '</tbody></table>';
-      $('driverGrid').innerHTML = driverHtml;
-      if (isBlend) {
-        $('blendSummary').innerHTML = 'Primary drivers (' + primOn + ' on / ' + primOff + ' off): ' + primaries.map(n => '<span class="chip ' + getDriverClass(n) + '">' + n + '</span>').join(', ') + '<br>Relief drivers (' + relOn + ' on / ' + relOff + ' off): ' + reliefs.map(n => '<span class="chip ' + getDriverClass(n) + '">' + n + '</span>').join(', ');
-      } else {
-        $('blendSummary').innerHTML = 'All drivers (' + primOn + ' on / ' + primOff + ' off): ' + allDrivers.map(n => '<span class="chip ' + getDriverClass(n) + '">' + n + '</span>').join(', ');
-      }
-      $('routeSummary').innerHTML = 'Primary route assignment: ' + (primaryRouteMode === 'rotate' ? `Rotating (every ${primarySwitchDays} days)` : 'Fixed') + '<br>Relief route assignment: ' + (reliefRouteMode === 'rotate' ? 'Rotating (as needed)' : 'Fixed (spill to free)');
-      $('note').innerHTML = 'Generated for ' + weeks + ' weeks starting ' + startDate.toLocaleDateString();
-      console.log('Rota generation completed');
-    } catch (e) {
-      console.error('Error in buildRota:', e);
-      $('error').textContent = 'Error generating rota. Check console for details.';
+    // Feasibility check (average)
+    const primWorkFraction = primOn/(primOn+primOff);
+    const relWorkFraction  = isBlend ? relOn/(relOn+relOff) : primWorkFraction;
+    const avgWorking = primaries.length*primWorkFraction + reliefs.length*relWorkFraction;
+    if(avgWorking < runs){
+      const minDriversNeeded = Math.ceil(runs / Math.max(primWorkFraction, relWorkFraction));
+      return setError(`Infeasible: average ${avgWorking.toFixed(2)} drivers available, need ${runs}. Add ${Math.max(0,minDriversNeeded-names.length)} drivers or reduce routes.`);
     }
+
+    // Random offsets search
+    let chosenOffsets=[], found=false;
+    const maxTries=200000;
+    for(let t=0;t<maxTries;t++){
+      const offsets = drivers.map(d=>Math.floor(Math.random()*d.cycle));
+      let ok=true;
+      for(let dd=0; dd<days; dd++){
+        const working = drivers.filter((dr,i)=> ((dd+offsets[i])%dr.cycle)<dr.on );
+        if(working.length < runs){ ok=false; break; }
+      }
+      if(ok){ chosenOffsets=offsets; found=true; break; }
+    }
+    if(!found){
+      const minDriversNeeded = Math.ceil(runs / Math.max(primWorkFraction, relWorkFraction));
+      return setError(`Could not find a valid schedule. Need at least ${minDriversNeeded} drivers for ${runs} routes with this pattern.`);
+    }
+
+    // Build rota rows
+    rota = [];
+    const primaryAssignments = new Map(primaries.map(p=>[p,[]]));
+    for(let d=0; d<days; d++){
+      const date = addDays(startDate, d);
+      const dayName = date.toLocaleString('en-GB',{weekday:'short'});
+      const isWeekend = date.getDay()===0 || date.getDay()===6;
+      const working = drivers.filter((dr,i)=> ((d+chosenOffsets[i])%dr.cycle)<dr.on ).map(dr=>dr.name);
+      const primaryWorking = working.filter(n=>primaries.includes(n));
+      const reliefWorking  = working.filter(n=>reliefs.includes(n));
+
+      let routeAssignments = new Array(runs).fill(null);
+      let freeRoutes = Array.from({length:runs},(_,i)=>i);
+
+      if(primaryRouteMode==='fixed'){
+        for(let p=0;p<primaries.length;p++){
+          const name = primaries[p];
+          if(working.includes(name)){
+            routeAssignments[p]=name;
+            primaryAssignments.get(name).push(p);
+            freeRoutes = freeRoutes.filter(r=>r!==p);
+          } else {
+            primaryAssignments.get(name).push(null);
+          }
+        }
+      } else {
+        const sortedPrim = [...primaryWorking].sort((a,b)=>primaries.indexOf(a)-primaries.indexOf(b));
+        let available = [...freeRoutes];
+        for(let p=0; p<sortedPrim.length && available.length>0; p++){
+          const name = sortedPrim[p];
+          const prev = primaryAssignments.get(name);
+          let i=prev.length-1, consecutive=0, lastRoute=null;
+          if(i>=0){
+            while(i>=0 && prev[i]===null) i--;
+            if(i>=0){ lastRoute=prev[i]; consecutive=1; i--; while(i>=0 && prev[i]===lastRoute){ consecutive++; i--; } }
+          }
+          let route;
+          if(consecutive>0 && consecutive<primarySwitchDays && lastRoute!==null && available.includes(lastRoute)){
+            route=lastRoute;
+          } else {
+            route = getNewRoute(available, lastRoute, date, p, runs);
+          }
+          routeAssignments[route]=name;
+          primaryAssignments.get(name).push(route);
+          available = available.filter(r=>r!==route);
+        }
+        freeRoutes = available;
+        primaries.forEach(n=>{ if(!primaryWorking.includes(n)) primaryAssignments.get(n).push(null); });
+      }
+
+      if(freeRoutes.length>0){
+        const sortedRel = [...reliefWorking].sort((a,b)=>reliefs.indexOf(a)-reliefs.indexOf(b));
+        let available = [...freeRoutes];
+        for(let p=0; p<sortedRel.length && available.length>0; p++){
+          const startR = hash(toISO(date)) % runs;
+          const route = (reliefRouteMode==='fixed')
+            ? (available.includes(p%runs) ? (p%runs) : available[0])
+            : available[(startR + p) % available.length];
+          routeAssignments[route] = sortedRel[p];
+          available = available.filter(r=>r!==route);
+        }
+        freeRoutes = available;
+      }
+
+      const spares = working.filter(n=>!routeAssignments.includes(n)).join(', ');
+      rota.push({ dateStr: toISO(date), dayName, isWeekend, assigned: routeAssignments, spares });
+    }
+
+    runsGlobal = runs;
+    renderCtx = { R:runs, startDate, weeks, primaries, reliefs, isBlend, primOn, primOff, relOn, relOff,
+                  primaryRouteMode, reliefRouteMode, primarySwitchDays };
+
+    // Apply any existing holidays, then render
+    applyHolidaysToRota();
+    renderTablesFromCtx();
+    setOk('Rota generated.');
   }
 
   function getNewRoute(availableRoutes, avoid, date, p, runs) {
-    try {
-      let newAvail = avoid !== null ? availableRoutes.filter(r => r !== avoid) : availableRoutes;
-      if (newAvail.length === 0) newAvail = availableRoutes;
-      const startR = hash(toISO(date)) % newAvail.length;
-      return newAvail[(startR + p) % newAvail.length];
-    } catch (e) {
-      console.error('Error in getNewRoute:', e);
-      throw e;
-    }
+    let newAvail = avoid !== null ? availableRoutes.filter(r => r !== avoid) : availableRoutes;
+    if (newAvail.length === 0) newAvail = availableRoutes;
+    const startR = hash(toISO(date)) % newAvail.length;
+    return newAvail[(startR + p) % newAvail.length];
   }
 
-  $('csv').addEventListener('click', () => {
-    try {
-      if (rota.length === 0) {
-        $('error').textContent = 'Build the rota first.';
-        console.error('No rota data for CSV export');
-        return;
+  // ===== Rendering =====
+  function renderTablesFromCtx(){
+    const c = renderCtx; if(!c) return;
+    renderTables(rota, c.R, c.startDate, c.weeks, c.primaries, c.reliefs, c.isBlend, c.primOn, c.primOff, c.relOn, c.relOff, c.primaryRouteMode, c.reliefRouteMode, c.primarySwitchDays);
+  }
+
+  function renderTables(rota, R, startDate, weeks, primaries, reliefs, isBlend, primOn, primOff, relOn, relOff, primaryRouteMode, reliefRouteMode, primarySwitchDays){
+    // Rota table (clickable chips)
+    let html = '<table><thead><tr><th>Date</th><th>Day</th>';
+    for(let r=1;r<=R;r++) html += `<th>Run ${r}</th>`;
+    if (rota.some(row=>row.spares)) html += '<th>Spare</th>';
+    html += '</tr></thead><tbody>';
+    rota.forEach((row, dayIdx)=>{
+      html += `<tr${row.isWeekend?' class="weekend"':''}><td>${row.dateStr}</td><td>${row.dayName}</td>`;
+      row.assigned.forEach((name, routeIdx)=>{
+        if(name){
+          const base = name.endsWith(' Holiday') ? name.replace(/ Holiday$/,'') : name;
+          const isHol = name.endsWith(' Holiday');
+          html += `<td><span class="chip ${getDriverClass(base)}${isHol?' holiday':''}" data-day="${dayIdx}" data-route="${routeIdx}" data-base="${base}">${name}</span></td>`;
+        } else html += '<td></td>';
+      });
+      if (rota.some(r=>r.spares)){
+        const chips = row.spares.split(', ').filter(Boolean).map(n=>{
+          const isHol = n.endsWith(' Holiday');
+          const base = isHol ? n.replace(/ Holiday$/,'') : n;
+          return `<span class="chip ${getDriverClass(base)}${isHol?' holiday':''}" aria-disabled="true">${n}</span>`;
+        }).join(' ');
+        html += `<td>${chips}</td>`;
       }
-      const runs = int($('runs').value, 3);
-      const hasSpare = rota.some(item => item.spares);
-      let csv = 'Date,Day';
-      for (let r = 1; r <= runs; r++) csv += ',Run ' + r;
-      if (hasSpare) csv += ',Spare';
-      csv += '\n';
-      rota.forEach(item => {
-        csv += item.dateStr + ',' + item.dayName;
-        item.assigned.forEach(a => csv += ',' + (a || ''));
-        if (hasSpare) csv += ',' + item.spares;
-        csv += '\n';
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    $('rotaGrid').innerHTML = html;
+
+    // Summary
+    const allDrivers = Array.from(new Set([...primaries, ...reliefs]));
+    const runCounts = new Map(allDrivers.map(n=>[n,0]));
+    const spareCounts = new Map(allDrivers.map(n=>[n,0]));
+    rota.forEach(row=>{
+      row.assigned.forEach(n=>{
+        if(!n) return;
+        const base = n.endsWith(' Holiday') ? n.replace(/ Holiday$/,'') : n;
+        runCounts.set(base, (runCounts.get(base)||0) + 1);
       });
-      csv += '\nSummary\nDriver';
-      if (hasSpare) csv += ',Run days,Spare days,Total On-days\n';
-      else csv += ',Runs Covered (days)\n';
-      const allDrivers = [...new Set([...rota[0].assigned.filter(a => a), ...rota[0].spares.split(', ').filter(s => s)])];
-      allDrivers.forEach(n => {
-        let runsC = 0, sparesC = 0;
-        rota.forEach(item => {
-          if (item.assigned.includes(n)) runsC++;
-          if (item.spares.split(', ').includes(n)) sparesC++;
-        });
-        csv += n;
-        if (hasSpare) csv += ',' + runsC + ',' + sparesC + ',' + (runsC + sparesC);
-        else csv += ',' + runsC;
-        csv += '\n';
+      row.spares.split(', ').filter(Boolean).forEach(n=>{
+        const base = n.endsWith(' Holiday') ? n.replace(/ Holiday$/,'') : n;
+        spareCounts.set(base, (spareCounts.get(base)||0) + 1);
       });
-      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'rota_' + toISO(new Date()) + '.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      console.log('CSV exported successfully');
-    } catch (e) {
-      console.error('Error in CSV export:', e);
-      $('error').textContent = 'Error exporting CSV. Check console for details.';
+    });
+    let sumHtml = '<table><thead><tr><th>Driver</th><th>Run days</th><th>Spare days</th><th>Total On-days</th></tr></thead><tbody>';
+    allDrivers.forEach(n=>{
+      const rd = runCounts.get(n)||0;
+      const sd = spareCounts.get(n)||0;
+      sumHtml += `<tr><td><span class="chip ${getDriverClass(n)}">${n}</span></td><td>${rd}</td><td>${sd}</td><td>${rd+sd}</td></tr>`;
+    });
+    sumHtml += '</tbody></table>';
+    $('summaryGrid').innerHTML = sumHtml;
+
+    // Driver grid
+    let driverHtml = '<table><thead><tr><th>Driver</th>';
+    for(let d=0; d<weeks*7; d++){
+      const date = addDays(startDate, d);
+      const dayShort = date.toLocaleString('en-GB', { weekday: 'short' });
+      const dateShort = date.toLocaleString('en-GB', { day: '2-digit', month: '2-digit' });
+      driverHtml += `<th>${dayShort}<br>${dateShort}</th>`;
     }
+    driverHtml += '</tr></thead><tbody>';
+    allDrivers.forEach(n=>{
+      driverHtml += `<tr><td><span class="chip ${getDriverClass(n)}">${n}</span></td>`;
+      rota.forEach(row=>{
+        const idx = row.assigned.findIndex(a => a && (a.endsWith(' Holiday') ? a.replace(/ Holiday$/,'') : a) === n);
+        if(idx>-1){
+          const label = row.assigned[idx];
+          const route = idx+1;
+          driverHtml += `<td>${label.endsWith(' Holiday')?`${label}`:`Run ${route}`}</td>`;
+        } else if (row.spares.split(', ').some(s => (s.endsWith(' Holiday')? s.replace(/ Holiday$/,''):s) === n)){
+          driverHtml += `<td>Spare</td>`;
+        } else {
+          driverHtml += `<td>Off</td>`;
+        }
+      });
+      driverHtml += '</tr>';
+    });
+    driverHtml += '</tbody></table>';
+    $('driverGrid').innerHTML = driverHtml;
+
+    // Meta
+    $('blendSummary').innerHTML = isBlend
+      ? `Primary drivers (${primOn}/${primOff}): ${primaries.map(n=>`<span class="chip ${getDriverClass(n)}">${n}</span>`).join(', ')}<br>Relief drivers (${relOn}/${relOff}): ${reliefs.map(n=>`<span class="chip ${getDriverClass(n)}">${n}</span>`).join(', ')}`
+      : `All drivers (${primOn}/${primOff}): ${[...new Set([...primaries,...reliefs])].map(n=>`<span class="chip ${getDriverClass(n)}">${n}</span>`).join(', ')}`;
+    $('routeSummary').innerHTML = `Primary route assignment: ${primaryRouteMode==='rotate'?`Rotating (every ${primarySwitchDays} days)`:'Fixed'}<br>Relief route assignment: ${reliefRouteMode==='rotate'?'Rotating (as needed)':'Fixed (spill to free)'}`;
+    $('note').textContent = `Generated for ${weeks} weeks starting ${startDate.toLocaleDateString('en-GB')}`;
+
+    // Attach chip click handler (delegate)
+    attachChipEditing();
+  }
+
+  // ===== Chip editing (set/clear Holiday) =====
+  const chipMenu = $('chipMenu');
+  const chipAction = $('chipAction');
+  const chipApply = $('chipApply');
+  const chipCancel = $('chipCancel');
+  let activeChip = null; // DOM element
+  let activeMeta = null; // { day, route, base }
+
+  function attachChipEditing(){
+    const grid = $('rotaGrid');
+    grid.removeEventListener('click', chipClickHandler);
+    grid.addEventListener('click', chipClickHandler);
+    document.addEventListener('click', (e)=>{
+      if(!chipMenu.contains(e.target) && (!activeChip || !activeChip.contains(e.target))){
+        hideChipMenu();
+      }
+    });
+  }
+
+  function chipClickHandler(e){
+    const chip = e.target.closest('.chip');
+    if(!chip || chip.getAttribute('aria-disabled')==='true') return;
+    activeChip = chip;
+    const rect = chip.getBoundingClientRect();
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    const scrollX = window.scrollX || document.documentElement.scrollLeft;
+
+    const day = parseInt(chip.getAttribute('data-day'),10);
+    const route = parseInt(chip.getAttribute('data-route'),10);
+    const base = chip.getAttribute('data-base');
+
+    activeMeta = { day, route, base };
+    chipAction.value = chip.classList.contains('holiday') ? 'clearHoliday' : 'setHoliday';
+
+    chipMenu.style.left = (rect.left + scrollX) + 'px';
+    chipMenu.style.top  = (rect.bottom + scrollY + 6) + 'px';
+    chipMenu.style.display = 'block';
+    chipMenu.setAttribute('aria-hidden','false');
+  }
+
+  function hideChipMenu(){
+    chipMenu.style.display='none';
+    chipMenu.setAttribute('aria-hidden','true');
+    activeChip = null;
+    activeMeta = null;
+  }
+
+  chipApply.addEventListener('click', ()=>{
+    if(!activeChip || !activeMeta) return;
+    const {day, route, base} = activeMeta;
+    const action = chipAction.value;
+
+    if(action==='setHoliday'){
+      activeChip.classList.add('holiday');
+      activeChip.textContent = `${base} Holiday`;
+      activeChip.setAttribute('data-base', base);
+      if(rota[day] && Array.isArray(rota[day].assigned) && route>=0){
+        rota[day].assigned[route] = `${base} Holiday`;
+      }
+    } else {
+      activeChip.classList.remove('holiday');
+      activeChip.textContent = base;
+      if(rota[day] && Array.isArray(rota[day].assigned) && route>=0){
+        rota[day].assigned[route] = base;
+      }
+    }
+    hideChipMenu();
+    renderTablesFromCtx(); // refresh summary/driver grid
   });
+  chipCancel.addEventListener('click', hideChipMenu);
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideChipMenu(); });
+
+  // ===== Bulk Holiday Tool =====
+  function populateHolidayDriverOptions(names){
+    const sel = $('holidayDriver');
+    sel.innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  }
+
+  function renderHolidayList(){
+    const el = $('holidayList');
+    if(holidays.length===0){ el.innerHTML = '<p class="small muted" style="padding:8px">No holidays queued.</p>'; return; }
+    let h = '<table><thead><tr><th>#</th><th>Driver</th><th>Start</th><th>End</th><th></th></tr></thead><tbody>';
+    holidays.forEach((x,i)=>{
+      h += `<tr><td>${i+1}</td><td><span class="chip ${getDriverClass(x.driver)}">${x.driver}</span></td><td>${x.start}</td><td>${x.end}</td><td><button class="btn small danger" data-del="${i}">Remove</button></td></tr>`;
+    });
+    h += '</tbody></table>';
+    el.innerHTML = h;
+    el.querySelectorAll('button[data-del]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = parseInt(btn.getAttribute('data-del'),10);
+        holidays.splice(idx,1);
+        renderHolidayList();
+      });
+    });
+  }
+
+  $('addHoliday').addEventListener('click', ()=>{
+    const driver = $('holidayDriver').value;
+    const s = $('holidayStart').value;
+    const e = $('holidayEnd').value || s;
+    if(!driver){ return setError('Choose a driver for the holiday.'); }
+    if(!s){ return setError('Choose a start date for the holiday.'); }
+    if(e < s){ return setError('End date cannot be before start date.'); }
+    setError('');
+    holidays.push({driver, start:s, end:e});
+    renderHolidayList();
+    setOk(`Added holiday for ${driver} (${s} → ${e}).`);
+  });
+
+  $('clearHolidays').addEventListener('click', ()=>{
+    holidays = [];
+    renderHolidayList();
+    setOk('Cleared holiday list.');
+  });
+
+  $('applyHoliday').addEventListener('click', ()=>{
+    if(!rota.length) return setError('Build the rota first.');
+    if(!holidays.length) return setError('Add at least one holiday to apply.');
+    // First clear existing " Holiday" labels to avoid duplicates stacking
+    for(const row of rota){
+      row.assigned = row.assigned.map(a => (a && a.endsWith(' Holiday')) ? a.replace(/ Holiday$/,'') : a);
+      const sp = row.spares.split(', ').filter(Boolean).map(s => (s.endsWith(' Holiday')? s.replace(/ Holiday$/,'') : s));
+      row.spares = sp.join(', ');
+    }
+    // Apply holidays
+    for(const h of holidays){
+      for(const row of rota){
+        if(between(row.dateStr, h.start, h.end)){
+          const idx = row.assigned.findIndex(a => a && (a.endsWith(' Holiday')? a.replace(/ Holiday$/,'') : a) === h.driver);
+          if(idx > -1) row.assigned[idx] = `${h.driver} Holiday`;
+          const spList = row.spares.split(', ').filter(Boolean);
+          const sIdx = spList.findIndex(s => (s.endsWith(' Holiday') ? s.replace(/ Holiday$/,'') : s) === h.driver);
+          if(sIdx > -1) spList[sIdx] = `${h.driver} Holiday`;
+          row.spares = spList.join(', ');
+        }
+      }
+    }
+    renderTablesFromCtx();
+    setOk('Holidays applied to rota.');
+  });
+
+  function applyHolidaysToRota(){
+    if(!holidays.length) return;
+    // reuse apply logic
+    $('applyHoliday').click();
+  }
+
+  // ===== CSV export (reflects holiday labels) =====
+  $('csv').addEventListener('click', ()=>{
+    if (!rota.length){ return setError('Build the rota first.'); }
+    setError('');
+    const R = runsGlobal || int($('runs').value,3);
+    const hasSpare = rota.some(item=>item.spares);
+    let csv = 'Date,Day';
+    for(let r=1;r<=R;r++) csv += `,Run ${r}`;
+    if (hasSpare) csv += ',Spare';
+    csv += '\n';
+    rota.forEach(item=>{
+      csv += `${item.dateStr},${item.dayName}`;
+      item.assigned.forEach(a=> csv += `,${a||''}`);
+      if (hasSpare) csv += `,${item.spares}`;
+      csv += '\n';
+    });
+    // Summary
+    const allDriversSet = new Set();
+    rota.forEach(item=>{
+      item.assigned.forEach(a=>{ if(a){ const base=a.endsWith(' Holiday')?a.replace(/ Holiday$/,''):a; allDriversSet.add(base); }});
+      item.spares.split(', ').forEach(s=>{ if(s){ const base=s.endsWith(' Holiday')?s.replace(/ Holiday$/,''):s; allDriversSet.add(base); }});
+    });
+    csv += '\nSummary\nDriver,Run days,Spare days,Total On-days\n';
+    [...allDriversSet].sort().forEach(n=>{
+      let runsC=0, sparesC=0;
+      rota.forEach(item=>{
+        if(item.assigned.some(a=>a && (a.endsWith(' Holiday')?a.replace(/ Holiday$/,''):a)===n)) runsC++;
+        if(item.spares.split(', ').some(s=> (s.endsWith(' Holiday')?s.replace(/ Holiday$/,''):s)===n)) sparesC++;
+      });
+      csv += `${n},${runsC},${sparesC},${runsC+sparesC}\n`;
+    });
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href=url; a.download=`rota_${toISO(new Date())}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setOk('CSV exported.');
+  });
+
 })();
 </script>
 </body>

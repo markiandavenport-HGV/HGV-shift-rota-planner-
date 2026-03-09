@@ -1,755 +1,1287 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Davenport Transport Solutions Shift Rota Planner</title>
-<style>
-  :root{ --bg:#f4f5f7; --ink:#1f2937; --grid:#d9dde3; --muted:#6b7280; --card:#ffffff; --accent:#1f6feb; --chip-text:#111827; --weekend:#fafafa; }
-  *{box-sizing:border-box}
-  body{margin:0; padding:18px; background:var(--bg); color:var(--ink); font:15px/1.4 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;}
-  h1{margin:0 0 10px; font-size:20px}
-  .wrap{max-width:1200px; margin:0 auto}
-  .panel{background:var(--card); border:1px solid var(--grid); border-radius:10px; padding:14px; margin:0 0 14px;}
-  label{display:block; font-size:12px; color:var(--muted); margin:6px 0 4px}
-  input, select, textarea, button{ width:100%; padding:8px 10px; border:1px solid var(--grid); border-radius:8px; background:#fff; color:var(--ink); outline:none;}
-  input[type="date"]{font-family:inherit;}
-  input[readonly]{background:#f8fafc}
-  textarea{min-height:74px; resize:vertical}
-  .row{display:grid; gap:8px}
-  @media(min-width:1120px){ .row{grid-template-columns: 560px 1fr} }
-  .inline{display:flex; gap:8px}
-  .inline > div{flex:1}
-  .btn{cursor:pointer; width:auto; border:1px solid var(--accent); color:#fff; background:var(--accent); font-weight:600}
-  .btn.secondary{background:#fff;color:var(--accent)}
-  .btn.small{padding:6px 10px; font-size:12px}
-  .muted{color:var(--muted)}
-  .grid{overflow:auto; border:1px solid var(--grid); border-radius:10px; background:#fff}
-  table{border-collapse:separate; border-spacing:0; width:100%}
-  th, td{border-right:1px solid var(--grid); border-bottom:1px solid var(--grid); padding:6px 8px; text-align:left; white-space:nowrap; font-variant-numeric:tabular-nums;}
-  thead th{position:sticky; top:0; background:#f7f8fa; z-index:1}
-  .chip{ display:inline-block; border-radius:6px; padding:3px 8px; border:1px solid rgba(0,0,0,.07); font-weight:700; letter-spacing:.2px; box-shadow:inset 0 1px 0 rgba(255,255,255,.6); cursor:pointer; }
-  .small{font-size:12px}
-  .section-title{font-weight:700;margin:10px 0 6px}
-  tr.weekend td{background:var(--weekend)}
-  .chip:hover{opacity:0.9}
-  .error{color:#ef4444; font-size:12px; margin:4px 0}
-  .ok{color:#047857; font-size:12px; margin:4px 0}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WealthOS</title>
+  <style>
+    :root{
+      --bg:#040b2a;
+      --bg-2:#081236;
+      --panel:#0b153d;
+      --border:rgba(255,255,255,.08);
+      --text:#f3f6ff;
+      --muted:#8f9ab9;
+      --green:#33e0a1;
+      --pink:#ff648c;
+      --blue:#5b9dff;
+      --orange:#f7aa19;
+      --purple:#9966ff;
+      --teal:#17d4a7;
+      --shadow:0 14px 40px rgba(0,0,0,.35);
+    }
 
-  /* Holiday visual */
-  .chip.holiday{
-    background:#ffe2e2 !important;
-    border-color:#fca5a5;
-    position:relative;
-  }
-  .chip.holiday::after{
-    content:" Holiday";
-    font-size:10px;
-    font-weight:700;
-    margin-left:6px;
-    color:#b91c1c;
-  }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      padding:0;
+      background:
+        radial-gradient(circle at top left, rgba(31,56,140,.24), transparent 28%),
+        radial-gradient(circle at top right, rgba(0,255,180,.06), transparent 20%),
+        linear-gradient(180deg,#030821 0%, #030a27 100%);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    }
 
-  /* Tiny floating action menu */
-  .chip-menu{
-    position:absolute; z-index:10; background:#fff; border:1px solid var(--grid); border-radius:8px;
-    padding:6px; box-shadow:0 6px 20px rgba(0,0,0,.12);
-    display:none; min-width:180px;
-  }
-  .chip-menu select, .chip-menu button{ width:100%; margin:4px 0; }
+    body{min-height:100vh}
 
-  /* Holidays list */
-  #holidayList table td, #holidayList table th{ white-space:nowrap; }
-  .danger{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
-</style>
+    .app{
+      width:100%;
+      max-width:430px;
+      margin:0 auto;
+      min-height:100vh;
+      background:transparent;
+    }
+
+    .brand{
+      padding:16px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .brand-left{
+      display:flex;gap:14px;align-items:center;
+    }
+    .brand-icon{
+      width:54px;height:54px;border-radius:16px;
+      background:linear-gradient(135deg,#29d48c,#1cc8b2);
+      display:grid;place-items:center;
+      font-size:28px;font-weight:800;
+      box-shadow:var(--shadow);
+    }
+    .brand-title{
+      font-size:24px;
+      font-weight:800;
+      line-height:1.1;
+    }
+    .brand-sub{
+      color:#7f8cb3;
+      font-size:14px;
+      margin-top:4px;
+      letter-spacing:.2px;
+    }
+    .menu-btn{
+      background:transparent;border:0;color:#d3dbff;
+      font-size:30px;cursor:pointer;padding:4px 8px;border-radius:12px;
+    }
+
+    .side-menu{
+      display:none;
+      padding:10px 16px 20px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .side-menu.open{display:block}
+    .nav-list{display:grid;gap:14px}
+    .nav-item{
+      width:100%;
+      border:0;
+      color:#bfc8ea;
+      background:transparent;
+      border-radius:18px;
+      padding:16px 18px;
+      text-align:left;
+      font-size:18px;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+    .nav-item.active{
+      color:#55e6af;
+      background:linear-gradient(90deg, rgba(17,212,143,.16), rgba(17,212,143,.06));
+      box-shadow:inset 0 0 0 1px rgba(61,228,165,.08);
+    }
+
+    .content{
+      padding:18px 16px 96px;
+    }
+    .page{display:none}
+    .page.active{display:block}
+
+    h1{
+      margin:10px 0 8px;
+      font-size:30px;
+      line-height:1.1;
+    }
+    .subtext{
+      color:var(--muted);
+      font-size:16px;
+      margin-bottom:18px;
+    }
+
+    .month-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin:10px 0 22px;
+      flex-wrap:wrap;
+    }
+    .month-picker{
+      display:flex;
+      align-items:center;
+      gap:16px;
+      font-size:20px;
+      font-weight:700;
+    }
+    .month-picker button{
+      background:transparent;border:0;color:#dbe3ff;font-size:30px;cursor:pointer;
+    }
+
+    .btn{
+      border:0;
+      border-radius:14px;
+      padding:14px 18px;
+      font-weight:700;
+      font-size:18px;
+      cursor:pointer;
+    }
+    .btn-add{background:#f59b10;color:#fff;min-width:140px}
+    .btn-green{background:#16b67d;color:#fff}
+    .btn-red{background:#ea2a57;color:#fff}
+    .btn-export{background:#f1f3f7;color:#8c95aa;border:2px solid #c9cfdb;padding:12px 16px}
+
+    .stat-grid{
+      display:grid;
+      gap:16px;
+    }
+    .card{
+      border-radius:28px;
+      padding:24px;
+      background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.06);
+      box-shadow:var(--shadow);
+    }
+    .stat-card{
+      position:relative;
+      overflow:hidden;
+      min-height:150px;
+    }
+    .stat-card:before{
+      content:"";
+      position:absolute;inset:0;
+      background:linear-gradient(135deg, rgba(255,255,255,.05), transparent 55%);
+      pointer-events:none;
+    }
+    .stat-label{
+      color:#b8c1de;
+      letter-spacing:3px;
+      font-size:14px;
+      margin-bottom:16px;
+    }
+    .stat-value{
+      font-size:34px;
+      font-weight:900;
+      line-height:1;
+      margin-bottom:10px;
+    }
+    .stat-note{
+      color:var(--muted);
+      font-size:15px;
+    }
+    .stat-icon{
+      position:absolute;
+      right:22px;
+      top:22px;
+      width:58px;height:58px;
+      border-radius:18px;
+      display:grid;place-items:center;
+      font-size:28px;font-weight:800;
+      background:rgba(255,255,255,.06);
+      color:#fff;
+    }
+    .income-card{background:linear-gradient(135deg, rgba(24,179,117,.28), rgba(6,18,61,.88))}
+    .liability-card{background:linear-gradient(135deg, rgba(155,28,79,.35), rgba(6,18,61,.88))}
+    .cashflow-card{background:linear-gradient(135deg, rgba(31,104,255,.27), rgba(6,18,61,.88))}
+    .asset-card{background:linear-gradient(135deg, rgba(154,91,9,.30), rgba(6,18,61,.88))}
+
+    .section{
+      margin-top:18px;
+    }
+    .section-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:12px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+    .section-title{
+      font-size:22px;
+      font-weight:800;
+      margin:0;
+    }
+    .section-sub{
+      color:var(--muted);
+      margin-top:4px;
+      font-size:14px;
+    }
+
+    .table-wrap{
+      overflow:auto;
+      border-radius:26px;
+      border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.02);
+      box-shadow:var(--shadow);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:680px;
+    }
+    th,td{
+      padding:18px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{
+      color:#8893b7;
+      font-size:13px;
+      font-weight:800;
+      letter-spacing:3px;
+      white-space:nowrap;
+    }
+    td{
+      font-size:16px;
+      color:#eef3ff;
+    }
+    tr:last-child td{border-bottom:0}
+
+    .amount-income{color:var(--green);font-weight:800}
+    .amount-liability{color:var(--pink);font-weight:800}
+    .amount-asset{color:#ffc53d;font-weight:800}
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      padding:7px 14px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:15px;
+      border:1px solid rgba(255,255,255,.1);
+      white-space:nowrap;
+    }
+    .pill.salary{color:#52f0b5;background:rgba(20,172,123,.12);border-color:rgba(20,172,123,.28)}
+    .pill.freelance{color:#60a9ff;background:rgba(43,111,255,.12);border-color:rgba(43,111,255,.28)}
+    .pill.dividends{color:#ffcb43;background:rgba(255,178,20,.12);border-color:rgba(255,178,20,.28)}
+    .pill.rental{color:#ba83ff;background:rgba(153,102,255,.12);border-color:rgba(153,102,255,.28)}
+    .pill.rent{color:#ff6e9d;background:rgba(255,76,125,.12);border-color:rgba(255,76,125,.28)}
+    .pill.loanpayment{color:#ff9d59;background:rgba(255,125,49,.12);border-color:rgba(255,125,49,.28)}
+    .pill.insurance{color:#45ceff;background:rgba(31,156,255,.12);border-color:rgba(31,156,255,.28)}
+    .pill.utilities{color:#ffcf4f;background:rgba(250,196,40,.12);border-color:rgba(250,196,40,.28)}
+    .pill.subscriptions{color:#c27aff;background:rgba(169,93,255,.12);border-color:rgba(169,93,255,.28)}
+    .pill.food{color:#9ce34d;background:rgba(123,208,43,.12);border-color:rgba(123,208,43,.28)}
+    .pill.gold{color:#ffbf3f;background:rgba(255,177,30,.12);border-color:rgba(255,177,30,.28)}
+    .pill.equities{color:#67a8ff;background:rgba(70,133,255,.12);border-color:rgba(70,133,255,.28)}
+    .pill.cash{color:#45e5b2;background:rgba(16,194,131,.12);border-color:rgba(16,194,131,.28)}
+    .pill.bitcoin{color:#ffa457;background:rgba(255,129,38,.12);border-color:rgba(255,129,38,.28)}
+    .pill.reits{color:#b27bff;background:rgba(157,102,255,.12);border-color:rgba(157,102,255,.28)}
+
+    .charts{
+      display:grid;
+      gap:18px;
+      margin-top:18px;
+    }
+
+    .chart-box{
+      border-radius:28px;
+      padding:22px;
+      background:rgba(255,255,255,.025);
+      border:1px solid rgba(255,255,255,.06);
+      box-shadow:var(--shadow);
+    }
+    .chart-title{
+      font-size:20px;
+      font-weight:800;
+      margin-bottom:16px;
+    }
+
+    .bar-chart{
+      height:290px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      padding:24px 8px 36px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+      position:relative;
+      margin-top:18px;
+    }
+    .bar-chart:before,
+    .bar-chart:after{
+      content:"";
+      position:absolute;left:0;right:0;
+      border-top:1px dashed rgba(135,152,204,.28);
+    }
+    .bar-chart:before{top:35%}
+    .bar-chart:after{top:66%}
+    .bar-group{
+      flex:1;
+      display:flex;
+      gap:8px;
+      align-items:flex-end;
+      justify-content:center;
+      height:100%;
+      position:relative;
+    }
+    .bar{
+      width:22px;
+      border-radius:8px 8px 0 0;
+      min-height:2px;
+    }
+    .bar.income{background:linear-gradient(180deg,#2df2b0,#14b778)}
+    .bar.liability{background:linear-gradient(180deg,#ff5c86,#f23e65)}
+    .bar-label{
+      position:absolute;
+      bottom:-34px;
+      font-size:14px;
+      color:#94a0c6;
+    }
+
+    .donut-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:26px;
+    }
+    .donut{
+      width:250px;height:250px;border-radius:50%;
+      background:
+        conic-gradient(
+          var(--orange) 0deg 156deg,
+          var(--blue) 156deg 275deg,
+          var(--teal) 275deg 315deg,
+          var(--purple) 315deg 360deg
+        );
+      position:relative;
+      margin-top:8px;
+    }
+    .donut:after{
+      content:"";
+      position:absolute;
+      inset:54px;
+      border-radius:50%;
+      background:linear-gradient(180deg,#061036,#040a28);
+      box-shadow:inset 0 0 0 10px rgba(255,255,255,.01);
+    }
+    .legend{
+      width:100%;
+      display:grid;
+      gap:12px;
+    }
+    .legend-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      color:#dce4ff;
+      font-size:16px;
+    }
+    .legend-left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+    .dot{
+      width:18px;height:18px;border-radius:50%;
+      flex:0 0 auto;
+    }
+    .dot.gold{background:var(--orange)}
+    .dot.equities{background:var(--blue)}
+    .dot.cash{background:var(--teal)}
+    .dot.reits{background:var(--purple)}
+    .legend-right{
+      display:flex;
+      gap:16px;
+      color:#c7d1ef;
+      white-space:nowrap;
+    }
+
+    .empty{
+      color:var(--muted);
+      padding:18px 0 0;
+      text-align:center;
+    }
+
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:50;
+    }
+    .modal.open{display:flex}
+    .modal-panel{
+      width:min(100%, 430px);
+      background:#0b153d;
+      border:1px solid rgba(255,255,255,.09);
+      border-radius:18px;
+      padding:22px 18px 20px;
+      box-shadow:0 30px 80px rgba(0,0,0,.5);
+      max-height:92vh;
+      overflow:auto;
+    }
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:18px;
+    }
+    .modal-title{
+      font-size:24px;
+      font-weight:800;
+      margin:0 auto;
+    }
+    .close{
+      background:transparent;
+      border:0;
+      color:#dce4ff;
+      font-size:34px;
+      cursor:pointer;
+      line-height:1;
+    }
+    .field{
+      margin-bottom:18px;
+    }
+    .label{
+      display:block;
+      color:#aeb8da;
+      margin-bottom:10px;
+      font-size:14px;
+      letter-spacing:3px;
+    }
+    .input,.select,.textarea{
+      width:100%;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.1);
+      color:#f2f6ff;
+      border-radius:14px;
+      padding:16px;
+      font-size:16px;
+      outline:none;
+    }
+    .textarea{min-height:88px;resize:vertical}
+    .switch-row{
+      display:flex;align-items:center;gap:14px;color:#dbe3ff
+    }
+    .switch{
+      position:relative;width:54px;height:32px;
+    }
+    .switch input{display:none}
+    .slider{
+      position:absolute;inset:0;background:#111;border-radius:40px;cursor:pointer;transition:.2s;
+    }
+    .slider:before{
+      content:"";
+      position:absolute;left:4px;top:4px;
+      width:24px;height:24px;border-radius:50%;
+      background:#fff;transition:.2s;
+    }
+    .switch input:checked + .slider{background:#16b67d}
+    .switch input:checked + .slider:before{transform:translateX(22px)}
+    .modal-actions{
+      display:grid;gap:10px;margin-top:8px;
+    }
+    .btn-wide{width:100%;padding:16px 18px;font-size:18px}
+    .btn-link{
+      background:transparent;color:#c4ccea
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Davenport Transport Solutions Shift Rota Planner</h1>
-
-  <div class="row">
-    <div class="panel">
-      <div class="inline">
+  <div class="app">
+    <div class="brand">
+      <div class="brand-left">
+        <div class="brand-icon">₿</div>
         <div>
-          <label>Start date mode</label>
-          <select id="startMode">
-            <option value="nextMonday" selected>Next Monday (default)</option>
-            <option value="today">Today</option>
-            <option value="firstNextMonth">First of next month</option>
-            <option value="custom">Custom</option>
-          </select>
-        </div>
-        <div>
-          <label>Start date</label>
-          <input type="date" id="startDateDisplay">
-        </div>
-        <div>
-          <label>Weeks to generate</label>
-          <input type="number" id="weeks" value="4" min="1" max="104">
+          <div class="brand-title">WealthOS</div>
+          <div class="brand-sub">Deflation is coming, accumulate scarcity</div>
         </div>
       </div>
+      <button class="menu-btn" id="menuBtn">☰</button>
+    </div>
 
-      <div class="inline">
-        <div>
-          <label>Pattern preset</label>
-          <select id="patternPreset">
-            <option value="p42">4 on / 2 off (all drivers)</option>
-            <option value="p44">4 on / 4 off (all drivers)</option>
-            <option value="p42_r44">Blend: 4/2 primary + 4/4 cover</option>
-            <option value="p44_r42">Blend: 4/4 primary + 4/2 cover</option>
-          </select>
-        </div>
-        <div>
-          <label>Runs per day (routes)</label>
-          <input type="number" id="runs" value="3" min="1" max="10">
-        </div>
+    <div class="side-menu" id="sideMenu">
+      <div class="nav-list">
+        <button class="nav-item active" data-page="dashboard">▦ Dashboard</button>
+        <button class="nav-item" data-page="income">↗ Income</button>
+        <button class="nav-item" data-page="liabilities">↘ Liabilities</button>
+        <button class="nav-item" data-page="assets">▣ Assets</button>
+        <button class="nav-item" data-page="networth">＄ Net Worth</button>
+        <button class="nav-item" data-page="progress">▥ Progress</button>
       </div>
+    </div>
 
-      <div class="inline">
-        <div>
-          <label>Primary / relief split (names)</label>
-          <select id="nameSplit">
-            <option value="auto" selected>Automatic (choose primaries to fit R)</option>
-            <option value="firstHalf">First half primary, second half relief</option>
-            <option value="firstOne">First name primary, others relief</option>
-          </select>
-        </div>
-        <div>
-          <label>Use all listed drivers?</label>
-          <select id="useAll">
-            <option value="yes" selected>Yes (assign everyone)</option>
-            <option value="need">Only as needed to meet target</option>
-          </select>
-        </div>
-      </div>
+    <div class="content">
+      <section class="page active" id="page-dashboard">
+        <h1>Financial Overview</h1>
+        <div class="subtext">Your monthly financial statement at a glance</div>
 
-      <div class="inline">
-        <div>
-          <label>Primary route assignment</label>
-          <select id="primaryRouteMode">
-            <option value="rotate" selected>Rotate across routes</option>
-            <option value="fixed">Fixed to a route</option>
-          </select>
+        <div class="month-row">
+          <div class="month-picker">
+            <button type="button">‹</button>
+            <div>March 2026</div>
+            <button type="button">›</button>
+          </div>
+          <button class="btn btn-export" id="exportBtn">Export CSV</button>
         </div>
-        <div>
-          <label>Primary days before route switch</label>
-          <input type="number" id="primarySwitchDays" value="2" min="1" max="7">
-        </div>
-      </div>
 
-      <div class="inline">
-        <div>
-          <label>Relief route assignment</label>
-          <select id="reliefRouteMode">
-            <option value="rotate" selected>Rotate across routes</option>
-            <option value="fixed">Fixed to a route (spill to free)</option>
-          </select>
+        <div class="stat-grid">
+          <div class="card stat-card income-card">
+            <div class="stat-label">TOTAL INCOME</div>
+            <div class="stat-value" id="totalIncome">$0</div>
+            <div class="stat-icon">↗</div>
+          </div>
+
+          <div class="card stat-card liability-card">
+            <div class="stat-label">TOTAL LIABILITIES</div>
+            <div class="stat-value" id="totalLiabilities">$0</div>
+            <div class="stat-icon">↘</div>
+          </div>
+
+          <div class="card stat-card cashflow-card">
+            <div class="stat-label">NET CASH FLOW</div>
+            <div class="stat-value" id="netCashflow">$0</div>
+            <div class="stat-note" id="cashflowNote">No data yet</div>
+            <div class="stat-icon">∿</div>
+          </div>
+
+          <div class="card stat-card asset-card">
+            <div class="stat-label">TOTAL ASSETS</div>
+            <div class="stat-value" id="totalAssets">$0</div>
+            <div class="stat-icon">▣</div>
+          </div>
         </div>
+      </section>
+
+      <section class="page" id="page-income">
+        <h1>Income</h1>
+        <div class="subtext">Total: <span style="color:var(--green);font-weight:800" id="incomePageTotal">$0</span> this month</div>
+
+        <div class="month-row">
+          <div class="month-picker">
+            <button type="button">‹</button>
+            <div>March 2026</div>
+            <button type="button">›</button>
+          </div>
+          <button class="btn btn-green" data-open="income">+ Add</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>SOURCE</th>
+                <th>CATEGORY</th>
+                <th>AMOUNT</th>
+                <th>RECURRING</th>
+              </tr>
+            </thead>
+            <tbody id="incomeTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="page" id="page-liabilities">
+        <h1>Liabilities</h1>
+        <div class="subtext">Track monthly expenses and outstanding debts</div>
+
+        <div class="month-row">
+          <div class="month-picker">
+            <button type="button">‹</button>
+            <div>March 2026</div>
+            <button type="button">›</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Monthly Expenses</h2>
+              <div class="section-sub">Used in cash flow calculations</div>
+            </div>
+            <button class="btn btn-red" data-open="expense">+ Add</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>CATEGORY</th>
+                  <th>AMOUNT</th>
+                  <th>RECURRING</th>
+                </tr>
+              </thead>
+              <tbody id="expenseTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Outstanding Debts</h2>
+              <div class="section-sub">Deducted from net worth calculation</div>
+            </div>
+            <button class="btn btn-red" data-open="debt">+ Add</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>CATEGORY</th>
+                  <th>BALANCE</th>
+                  <th>NOTES</th>
+                </tr>
+              </thead>
+              <tbody id="debtTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-assets">
+        <h1>Assets</h1>
+        <div class="subtext">Total: <span style="color:#ffc53d;font-weight:800" id="assetPageTotal">$0</span> this month</div>
+
+        <div class="month-row">
+          <div class="month-picker">
+            <button type="button">‹</button>
+            <div>March 2026</div>
+            <button type="button">›</button>
+          </div>
+          <button class="btn btn-add" data-open="asset">+ Add</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ASSET</th>
+                <th>TYPE</th>
+                <th>VALUE</th>
+                <th>DETAIL</th>
+              </tr>
+            </thead>
+            <tbody id="assetTable"></tbody>
+          </table>
+        </div>
+
+        <div class="charts">
+          <div class="chart-box">
+            <div class="chart-title">Asset Allocation</div>
+            <div class="donut-wrap">
+              <div class="donut"></div>
+              <div class="legend" id="assetLegend"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-networth">
+        <h1>Net Worth</h1>
+        <div class="subtext">Current assets minus outstanding debts</div>
+
+        <div class="section">
+          <div class="card stat-card cashflow-card">
+            <div class="stat-label">NET WORTH</div>
+            <div class="stat-value" id="netWorthValue">$0</div>
+            <div class="stat-note" id="netWorthNote">$0 vs liabilities</div>
+            <div class="stat-icon">$</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <div class="chart-box">
+            <div class="chart-title">12-Month Net Worth Trend</div>
+            <div class="bar-chart" id="netWorthTrend"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" id="page-progress">
+        <h1>Progress</h1>
+        <div class="subtext">6-month cash flow and asset allocation</div>
+
+        <div class="charts">
+          <div class="chart-box">
+            <div class="chart-title">6-Month Cash Flow</div>
+            <div class="bar-chart" id="cashflowChart"></div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-title">Asset Allocation</div>
+            <div class="donut-wrap">
+              <div class="donut"></div>
+              <div class="legend" id="progressLegend"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="modal" id="modal-income">
+    <div class="modal-panel">
+      <div class="modal-header">
         <div></div>
+        <h3 class="modal-title">Add Income</h3>
+        <button class="close" data-close>&times;</button>
       </div>
-
-      <label>Driver names (one per line)</label>
-      <textarea id="names">Mark
-Yousef
-Maruanne
-Darek
-Rob</textarea>
-
-      <div class="inline" style="margin-top:10px">
-        <button class="btn" id="build">Build rota</button>
-        <button class="btn secondary" id="csv">Export CSV</button>
-      </div>
-      <p class="error" id="error"></p>
-      <p class="ok" id="ok"></p>
-      <p class="small muted" id="note"></p>
-      <p class="small" id="blendSummary"></p>
-      <p class="small" id="routeSummary"></p>
-    </div>
-
-    <div class="panel">
-      <div class="section-title">Rota (visual)</div>
-      <div class="grid" id="rotaGrid"></div>
+      <form id="incomeForm">
+        <div class="field">
+          <label class="label">SOURCE</label>
+          <input class="input" name="source" placeholder="e.g. Employer Name" required />
+        </div>
+        <div class="field">
+          <label class="label">CATEGORY</label>
+          <select class="select" name="category" required>
+            <option value="">Select category</option>
+            <option>Salary</option>
+            <option>Freelance</option>
+            <option>Dividends</option>
+            <option>Rental</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">AMOUNT ($)</label>
+          <input class="input" name="amount" type="number" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="field">
+          <label class="label">RECURRING MONTHLY</label>
+          <div class="switch-row">
+            <label class="switch">
+              <input type="checkbox" name="recurring" />
+              <span class="slider"></span>
+            </label>
+            <span>Yes</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">NOTES</label>
+          <textarea class="textarea" name="notes" placeholder="Optional notes"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-green btn-wide" type="submit">Save</button>
+          <button class="btn btn-link btn-wide" type="button" data-close>Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <div class="row">
-    <div class="panel">
-      <div class="section-title">Drivers (assignments)</div>
-      <div class="grid" id="driverGrid"></div>
-    </div>
-
-    <div class="panel">
-      <div class="section-title">Summary (Run days per driver)</div>
-      <div class="grid" id="summaryGrid"></div>
+  <div class="modal" id="modal-expense">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div></div>
+        <h3 class="modal-title">Add Monthly Expense</h3>
+        <button class="close" data-close>&times;</button>
+      </div>
+      <form id="expenseForm">
+        <div class="field">
+          <label class="label">NAME</label>
+          <input class="input" name="name" placeholder="e.g. Monthly Rent" required />
+        </div>
+        <div class="field">
+          <label class="label">CATEGORY</label>
+          <select class="select" name="category" required>
+            <option value="">Select category</option>
+            <option>Rent</option>
+            <option>Loan Payment</option>
+            <option>Insurance</option>
+            <option>Utilities</option>
+            <option>Subscriptions</option>
+            <option>Food</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">AMOUNT ($)</label>
+          <input class="input" name="amount" type="number" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="field">
+          <label class="label">RECURRING MONTHLY</label>
+          <div class="switch-row">
+            <label class="switch">
+              <input type="checkbox" name="recurring" checked />
+              <span class="slider"></span>
+            </label>
+            <span>Yes</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">NOTES</label>
+          <textarea class="textarea" name="notes" placeholder="Optional notes"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-green btn-wide" type="submit">Save</button>
+          <button class="btn btn-link btn-wide" type="button" data-close>Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <!-- Holiday tools -->
-  <div class="panel">
-    <div class="section-title">Holiday tools</div>
-    <div class="inline">
-      <div>
-        <label>Driver</label>
-        <select id="holidayDriver"></select>
+  <div class="modal" id="modal-debt">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div></div>
+        <h3 class="modal-title">Add Debt</h3>
+        <button class="close" data-close>&times;</button>
       </div>
-      <div>
-        <label>Start date</label>
-        <input type="date" id="holidayStart">
-      </div>
-      <div>
-        <label>End date</label>
-        <input type="date" id="holidayEnd">
-      </div>
+      <form id="debtForm">
+        <div class="field">
+          <label class="label">NAME</label>
+          <input class="input" name="name" placeholder="e.g. Car Loan" required />
+        </div>
+        <div class="field">
+          <label class="label">CATEGORY</label>
+          <select class="select" name="category" required>
+            <option value="">Select category</option>
+            <option>Credit Card</option>
+            <option>Car Loan</option>
+            <option>Mortgage</option>
+            <option>Personal Loan</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">BALANCE ($)</label>
+          <input class="input" name="balance" type="number" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="field">
+          <label class="label">NOTES</label>
+          <textarea class="textarea" name="notes" placeholder="Optional notes"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-green btn-wide" type="submit">Save</button>
+          <button class="btn btn-link btn-wide" type="button" data-close>Cancel</button>
+        </div>
+      </form>
     </div>
-    <div class="inline" style="margin-top:8px">
-      <button class="btn" id="addHoliday">Add holidays</button>
-      <button class="btn secondary" id="applyHoliday">Apply to rota</button>
-      <button class="btn secondary danger" id="clearHolidays">Clear all holidays</button>
-    </div>
-    <p class="small muted">Tip: For a single-day holiday, set Start = End.</p>
-    <div class="section-title" style="margin-top:12px">Holiday list</div>
-    <div class="grid" id="holidayList"></div>
   </div>
-</div>
 
-<!-- Floating chip action menu -->
-<div id="chipMenu" class="chip-menu" role="dialog" aria-hidden="true">
-  <select id="chipAction">
-    <option value="setHoliday">Set “Holiday” label</option>
-    <option value="clearHoliday">Clear “Holiday” label</option>
-  </select>
-  <button id="chipApply" class="btn">Apply</button>
-  <button id="chipCancel" class="btn secondary">Cancel</button>
-</div>
+  <div class="modal" id="modal-asset">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div></div>
+        <h3 class="modal-title">Add Asset</h3>
+        <button class="close" data-close>&times;</button>
+      </div>
+      <form id="assetForm">
+        <div class="field">
+          <label class="label">ASSET NAME</label>
+          <input class="input" name="name" placeholder="e.g. SPDR Gold Trust" required />
+        </div>
+        <div class="field">
+          <label class="label">ASSET TYPE</label>
+          <select class="select" name="type" required>
+            <option value="">Select asset type</option>
+            <option>Gold</option>
+            <option>Equities</option>
+            <option>Cash</option>
+            <option>Bitcoin</option>
+            <option>REITs</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label">CURRENT VALUE ($)</label>
+          <input class="input" name="value" type="number" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="field">
+          <label class="label">QUANTITY</label>
+          <input class="input" name="quantity" placeholder="e.g. 10 shares" />
+        </div>
+        <div class="field">
+          <label class="label">PURCHASE PRICE / UNIT ($)</label>
+          <input class="input" name="detail" placeholder="e.g. 1950 or 58000 / BTC" />
+        </div>
+        <div class="field">
+          <label class="label">NOTES</label>
+          <textarea class="textarea" name="notes" placeholder="Optional notes"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-green btn-wide" type="submit">Save</button>
+          <button class="btn btn-link btn-wide" type="button" data-close>Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-<script>
-(function(){
-  const $ = id => document.getElementById(id);
+  <script>
+    const STORAGE_KEY = "wealthos-static-data-v1";
 
-  // ===== Distinct driver colors (no duplicates) =====
-  let nameIndex = {}; // driver name -> unique index
+    const defaultData = {
+      income: [
+        { source: "Tech Corp Salary", category: "Salary", amount: 8500, recurring: true, notes: "" },
+        { source: "Freelance Design", category: "Freelance", amount: 2200, recurring: false, notes: "" },
+        { source: "Dividend Portfolio", category: "Dividends", amount: 450, recurring: true, notes: "" },
+        { source: "Rental Property", category: "Rental", amount: 1800, recurring: true, notes: "" }
+      ],
+      expenses: [
+        { name: "Apartment Rent", category: "Rent", amount: 2400, recurring: true, notes: "" },
+        { name: "Car Loan", category: "Loan Payment", amount: 580, recurring: true, notes: "" },
+        { name: "Health Insurance", category: "Insurance", amount: 350, recurring: true, notes: "" },
+        { name: "Utilities", category: "Utilities", amount: 220, recurring: true, notes: "" },
+        { name: "Subscriptions", category: "Subscriptions", amount: 95, recurring: true, notes: "" },
+        { name: "Groceries", category: "Food", amount: 650, recurring: true, notes: "" }
+      ],
+      debts: [],
+      assets: [
+        { name: "Physical Gold (10 oz)", type: "Gold", value: 60000, quantity: "10 oz", detail: "$1,950", notes: "" },
+        { name: "S&P 500 ETF", type: "Equities", value: 45000, quantity: "", detail: "$480", notes: "" },
+        { name: "Emergency Fund", type: "Cash", value: 15000, quantity: "", detail: "—", notes: "" },
+        { name: "Bitcoin Holdings", type: "Bitcoin", value: 18000, quantity: "0.45 BTC", detail: "$58,000 / BTC", notes: "" }
+      ]
+    };
 
-  function getDriverClass(name){
-    const i = nameIndex[name];
-    return (i === undefined) ? 'driver-0' : `driver-${i}`;
-  }
-
-  function generateDriverStyles(names){
-    // Build stable unique list + index map
-    nameIndex = {};
-    const unique = [];
-    names.forEach(n => {
-      if (!nameIndex.hasOwnProperty(n)) {
-        nameIndex[n] = unique.length;
-        unique.push(n);
-      }
-    });
-
-    // Golden-angle hues for distinct colors
-    let css = '';
-    const GOLDEN_ANGLE = 137.508;
-    unique.forEach((name, i) => {
-      const hue = (i * GOLDEN_ANGLE) % 360;
-      const sat = 65; // %
-      const light = 72 - ((Math.floor(i / 24) % 2) * 12); // subtle alternation
-      css += `.chip.driver-${i}{background:hsl(${hue} ${sat}% ${light}%);color:#111827}`;
-    });
-
-    // Install/replace style tag
-    document.querySelectorAll('style[data-driver-styles]').forEach(s => s.remove());
-    const el = document.createElement('style');
-    el.setAttribute('data-driver-styles', '');
-    el.textContent = css;
-    document.head.appendChild(el);
-  }
-
-  // ===== Utilities =====
-  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function int(v, d = 0) { return parseInt(v, 10) || d; }
-  function cleanNames(text) { return text.split(/\r?\n/).map(l => l.trim()).filter(Boolean); }
-  function hash(s) { let h=0; for(let i=0;i<s.length;i++) h=(h*31 + s.charCodeAt(i))>>>0; return Math.abs(h); }
-  function addDays(date, days) { const r = new Date(date); r.setDate(r.getDate() + days); return r; }
-  function stripTime(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
-  function toISO(d) { return d.toISOString().slice(0, 10); }
-  function between(dateStr, startStr, endStr) { return dateStr >= startStr && dateStr <= endStr; }
-  function computeStartDate(mode) {
-    const d = new Date();
-    if (mode === 'today') return stripTime(d);
-    if (mode === 'firstNextMonth') { const x = new Date(d); x.setMonth(x.getMonth() + 1, 1); return stripTime(x); }
-    const x = new Date(d), wd = x.getDay(), diff = (1 - wd + 7) % 7; x.setDate(x.getDate() + diff); return stripTime(x); // next Monday
-  }
-  function updateStartDateDisplay() {
-    const mode = $('startMode').value;
-    if (mode !== 'custom') {
-      $('startDateDisplay').value = toISO(computeStartDate(mode));
-      $('startDateDisplay').setAttribute('readonly', '');
-    } else {
-      $('startDateDisplay').removeAttribute('readonly');
-      if (!$('startDateDisplay').value) $('startDateDisplay').value = toISO(stripTime(new Date()));
-    }
-  }
-  $('startMode').addEventListener('change', updateStartDateDisplay);
-  updateStartDateDisplay();
-
-  function setError(msg){ $('error').textContent = msg || ''; }
-  function setOk(msg){ $('ok').textContent = msg || ''; if(msg) setTimeout(()=>{$('ok').textContent='';}, 2500); }
-
-  // ===== Global state =====
-  let rota = []; // [{dateStr, dayName, isWeekend, assigned:[name|null], spares:"a, b"}]
-  let runsGlobal = 0;
-  let renderCtx = null; // for re-render
-  let holidays = []; // [{driver, start:'YYYY-MM-DD', end:'YYYY-MM-DD'}]
-
-  // ===== Build rota =====
-  $('build').addEventListener('click', buildRota);
-
-  function buildRota(){
-    setError(''); $('ok').textContent='';
-    const names = cleanNames($('names').value);
-    if(names.length<1){ return setError('Please provide at least one driver name.'); }
-    generateDriverStyles(names);
-    populateHolidayDriverOptions(names);
-
-    const runs  = clamp(int($('runs').value,3),1,10);
-    const weeks = clamp(int($('weeks').value,4),1,104);
-    const days  = weeks*7;
-    const startDate = stripTime(new Date($('startDateDisplay').value));
-    if(isNaN(startDate.getTime())) return setError('Invalid start date.');
-
-    const preset = $('patternPreset').value;
-    let primOn, primOff, relOn, relOff, isBlend = preset.includes('_');
-    if(preset==='p42'){ primOn=4; primOff=2; }
-    else if(preset==='p44'){ primOn=4; primOff=4; }
-    else if(preset==='p42_r44'){ primOn=4; primOff=2; relOn=4; relOff=4; }
-    else if(preset==='p44_r42'){ primOn=4; primOff=4; relOn=4; relOff=2; }
-
-    const nameSplit = $('nameSplit').value;
-    const useAll = $('useAll').value==='yes';
-    const primaryRouteMode = $('primaryRouteMode').value;
-    const reliefRouteMode  = $('reliefRouteMode').value;
-    const primarySwitchDays = clamp(int($('primarySwitchDays').value,2),1,7);
-
-    // Choose primary count
-    let numPrim;
-    if(!isBlend) numPrim = names.length;
-    else if(nameSplit==='auto') numPrim = runs;
-    else if(nameSplit==='firstHalf') numPrim = Math.floor(names.length/2);
-    else numPrim = 1;
-
-    if(numPrim>names.length) return setError('Not enough drivers for the selected primary count.');
-    if(primaryRouteMode==='fixed' && numPrim!==runs) return setError('For fixed primary routes, primaries must equal number of routes.');
-
-    const primaries = names.slice(0,numPrim);
-    let reliefs = names.slice(numPrim);
-    if(!useAll && isBlend){
-      const offFraction = primOff/(primOn+primOff);
-      const offSlotsPerDay = numPrim * offFraction;
-      const relFraction = relOn/(relOn+relOff);
-      const relNeeded = Math.ceil(offSlotsPerDay / relFraction + 0.5);
-      reliefs = reliefs.slice(0, relNeeded);
-    }
-
-    // Build drivers
-    const drivers=[];
-    primaries.forEach(n=>drivers.push({name:n,isPrimary:true,on:primOn,off:primOff,cycle:primOn+primOff}));
-    reliefs.forEach(n=>drivers.push({name:n,isPrimary:false,on:relOn,off:relOff,cycle:relOn+relOff}));
-
-    // Feasibility check (average)
-    const primWorkFraction = primOn/(primOn+primOff);
-    const relWorkFraction  = isBlend ? relOn/(relOn+relOff) : primWorkFraction;
-    const avgWorking = primaries.length*primWorkFraction + reliefs.length*relWorkFraction;
-    if(avgWorking < runs){
-      const minDriversNeeded = Math.ceil(runs / Math.max(primWorkFraction, relWorkFraction));
-      return setError(`Infeasible: average ${avgWorking.toFixed(2)} drivers available, need ${runs}. Add ${Math.max(0,minDriversNeeded-names.length)} drivers or reduce routes.`);
-    }
-
-    // Random offsets search
-    let chosenOffsets=[], found=false;
-    const maxTries=200000;
-    for(let t=0;t<maxTries;t++){
-      const offsets = drivers.map(d=>Math.floor(Math.random()*d.cycle));
-      let ok=true;
-      for(let dd=0; dd<days; dd++){
-        const working = drivers.filter((dr,i)=> ((dd+offsets[i])%dr.cycle)<dr.on );
-        if(working.length < runs){ ok=false; break; }
-      }
-      if(ok){ chosenOffsets=offsets; found=true; break; }
-    }
-    if(!found){
-      const minDriversNeeded = Math.ceil(runs / Math.max(primWorkFraction, relWorkFraction));
-      return setError(`Could not find a valid schedule. Need at least ${minDriversNeeded} drivers for ${runs} routes with this pattern.`);
-    }
-
-    // Build rota rows
-    rota = [];
-    const primaryAssignments = new Map(primaries.map(p=>[p,[]]));
-    for(let d=0; d<days; d++){
-      const date = addDays(startDate, d);
-      const dayName = date.toLocaleString('en-GB',{weekday:'short'});
-      const isWeekend = date.getDay()===0 || date.getDay()===6;
-      const working = drivers.filter((dr,i)=> ((d+chosenOffsets[i])%dr.cycle)<dr.on ).map(dr=>dr.name);
-      const primaryWorking = working.filter(n=>primaries.includes(n));
-      const reliefWorking  = working.filter(n=>reliefs.includes(n));
-
-      let routeAssignments = new Array(runs).fill(null);
-      let freeRoutes = Array.from({length:runs},(_,i)=>i);
-
-      if(primaryRouteMode==='fixed'){
-        for(let p=0;p<primaries.length;p++){
-          const name = primaries[p];
-          if(working.includes(name)){
-            routeAssignments[p]=name;
-            primaryAssignments.get(name).push(p);
-            freeRoutes = freeRoutes.filter(r=>r!==p);
-          } else {
-            primaryAssignments.get(name).push(null);
-          }
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+          return JSON.parse(JSON.stringify(defaultData));
         }
-      } else {
-        const sortedPrim = [...primaryWorking].sort((a,b)=>primaries.indexOf(a)-primaries.indexOf(b));
-        let available = [...freeRoutes];
-        for(let p=0; p<sortedPrim.length && available.length>0; p++){
-          const name = sortedPrim[p];
-          const prev = primaryAssignments.get(name);
-          let i=prev.length-1, consecutive=0, lastRoute=null;
-          if(i>=0){
-            while(i>=0 && prev[i]===null) i--;
-            if(i>=0){ lastRoute=prev[i]; consecutive=1; i--; while(i>=0 && prev[i]===lastRoute){ consecutive++; i--; } }
-          }
-          let route;
-          if(consecutive>0 && consecutive<primarySwitchDays && lastRoute!==null && available.includes(lastRoute)){
-            route=lastRoute;
-          } else {
-            route = getNewRoute(available, lastRoute, date, p, runs);
-          }
-          routeAssignments[route]=name;
-          primaryAssignments.get(name).push(route);
-          available = available.filter(r=>r!==route);
-        }
-        freeRoutes = available;
-        primaries.forEach(n=>{ if(!primaryWorking.includes(n)) primaryAssignments.get(n).push(null); });
-      }
-
-      if(freeRoutes.length>0){
-        const sortedRel = [...reliefWorking].sort((a,b)=>reliefs.indexOf(a)-reliefs.indexOf(b));
-        let available = [...freeRoutes];
-        for(let p=0; p<sortedRel.length && available.length>0; p++){
-          const startR = hash(toISO(date)) % runs;
-          const route = (reliefRouteMode==='fixed')
-            ? (available.includes(p%runs) ? (p%runs) : available[0])
-            : available[(startR + p) % available.length];
-          routeAssignments[route] = sortedRel[p];
-          available = available.filter(r=>r!==route);
-        }
-        freeRoutes = available;
-      }
-
-      const spares = working.filter(n=>!routeAssignments.includes(n)).join(', ');
-      rota.push({ dateStr: toISO(date), dayName, isWeekend, assigned: routeAssignments, spares });
-    }
-
-    runsGlobal = runs;
-    renderCtx = { R:runs, startDate, weeks, primaries, reliefs, isBlend, primOn, primOff, relOn, relOff,
-                  primaryRouteMode, reliefRouteMode, primarySwitchDays };
-
-    // Apply any existing holidays, then render
-    applyHolidaysToRota();
-    renderTablesFromCtx();
-    setOk('Rota generated.');
-  }
-
-  function getNewRoute(availableRoutes, avoid, date, p, runs) {
-    let newAvail = avoid !== null ? availableRoutes.filter(r => r !== avoid) : availableRoutes;
-    if (newAvail.length === 0) newAvail = availableRoutes;
-    const startR = hash(toISO(date)) % newAvail.length;
-    return newAvail[(startR + p) % newAvail.length];
-  }
-
-  // ===== Rendering =====
-  function renderTablesFromCtx(){
-    const c = renderCtx; if(!c) return;
-    renderTables(rota, c.R, c.startDate, c.weeks, c.primaries, c.reliefs, c.isBlend, c.primOn, c.primOff, c.relOn, c.relOff, c.primaryRouteMode, c.reliefRouteMode, c.primarySwitchDays);
-  }
-
-  function renderTables(rota, R, startDate, weeks, primaries, reliefs, isBlend, primOn, primOff, relOn, relOff, primaryRouteMode, reliefRouteMode, primarySwitchDays){
-    // Rota table (clickable chips)
-    let html = '<table><thead><tr><th>Date</th><th>Day</th>';
-    for(let r=1;r<=R;r++) html += `<th>Run ${r}</th>`;
-    if (rota.some(row=>row.spares)) html += '<th>Spare</th>';
-    html += '</tr></thead><tbody>';
-    rota.forEach((row, dayIdx)=>{
-      html += `<tr${row.isWeekend?' class="weekend"':''}><td>${row.dateStr}</td><td>${row.dayName}</td>`;
-      row.assigned.forEach((name, routeIdx)=>{
-        if(name){
-          const base = name.endsWith(' Holiday') ? name.replace(/ Holiday$/,'') : name;
-          const isHol = name.endsWith(' Holiday');
-          html += `<td><span class="chip ${getDriverClass(base)}${isHol?' holiday':''}" data-day="${dayIdx}" data-route="${routeIdx}" data-base="${base}">${name}</span></td>`;
-        } else html += '<td></td>';
-      });
-      if (rota.some(r=>r.spares)){
-        const chips = row.spares.split(', ').filter(Boolean).map(n=>{
-          const isHol = n.endsWith(' Holiday');
-          const base = isHol ? n.replace(/ Holiday$/,'') : n;
-          return `<span class="chip ${getDriverClass(base)}${isHol?' holiday':''}" aria-disabled="true">${n}</span>`;
-        }).join(' ');
-        html += `<td>${chips}</td>`;
-      }
-      html += '</tr>';
-    });
-    html += '</tbody></table>';
-    $('rotaGrid').innerHTML = html;
-
-    // Summary
-    const allDrivers = Array.from(new Set([...primaries, ...reliefs]));
-    const runCounts = new Map(allDrivers.map(n=>[n,0]));
-    const spareCounts = new Map(allDrivers.map(n=>[n,0]));
-    rota.forEach(row=>{
-      row.assigned.forEach(n=>{
-        if(!n) return;
-        const base = n.endsWith(' Holiday') ? n.replace(/ Holiday$/,'') : n;
-        runCounts.set(base, (runCounts.get(base)||0) + 1);
-      });
-      row.spares.split(', ').filter(Boolean).forEach(n=>{
-        const base = n.endsWith(' Holiday') ? n.replace(/ Holiday$/,'') : n;
-        spareCounts.set(base, (spareCounts.get(base)||0) + 1);
-      });
-    });
-    let sumHtml = '<table><thead><tr><th>Driver</th><th>Run days</th><th>Spare days</th><th>Total On-days</th></tr></thead><tbody>';
-    allDrivers.forEach(n=>{
-      const rd = runCounts.get(n)||0;
-      const sd = spareCounts.get(n)||0;
-      sumHtml += `<tr><td><span class="chip ${getDriverClass(n)}">${n}</span></td><td>${rd}</td><td>${sd}</td><td>${rd+sd}</td></tr>`;
-    });
-    sumHtml += '</tbody></table>';
-    $('summaryGrid').innerHTML = sumHtml;
-
-    // Driver grid
-    let driverHtml = '<table><thead><tr><th>Driver</th>';
-    for(let d=0; d<weeks*7; d++){
-      const date = addDays(startDate, d);
-      const dayShort = date.toLocaleString('en-GB', { weekday: 'short' });
-      const dateShort = date.toLocaleString('en-GB', { day: '2-digit', month: '2-digit' });
-      driverHtml += `<th>${dayShort}<br>${dateShort}</th>`;
-    }
-    driverHtml += '</tr></thead><tbody>';
-    allDrivers.forEach(n=>{
-      driverHtml += `<tr><td><span class="chip ${getDriverClass(n)}">${n}</span></td>`;
-      rota.forEach(row=>{
-        const idx = row.assigned.findIndex(a => a && (a.endsWith(' Holiday') ? a.replace(/ Holiday$/,'') : a) === n);
-        if(idx>-1){
-          const label = row.assigned[idx];
-          const route = idx+1;
-          driverHtml += `<td>${label.endsWith(' Holiday')?`${label}`:`Run ${route}`}</td>`;
-        } else if (row.spares.split(', ').some(s => (s.endsWith(' Holiday')? s.replace(/ Holiday$/,''):s) === n)){
-          driverHtml += `<td>Spare</td>`;
-        } else {
-          driverHtml += `<td>Off</td>`;
-        }
-      });
-      driverHtml += '</tr>';
-    });
-    driverHtml += '</tbody></table>';
-    $('driverGrid').innerHTML = driverHtml;
-
-    // Meta
-    $('blendSummary').innerHTML = isBlend
-      ? `Primary drivers (${primOn}/${primOff}): ${primaries.map(n=>`<span class="chip ${getDriverClass(n)}">${n}</span>`).join(', ')}<br>Relief drivers (${relOn}/${relOff}): ${reliefs.map(n=>`<span class="chip ${getDriverClass(n)}">${n}</span>`).join(', ')}`
-      : `All drivers (${primOn}/${primOff}): ${[...new Set([...primaries,...reliefs])].map(n=>`<span class="chip ${getDriverClass(n)}">${n}</span>`).join(', ')}`;
-    $('routeSummary').innerHTML = `Primary route assignment: ${primaryRouteMode==='rotate'?`Rotating (every ${primarySwitchDays} days)`:'Fixed'}<br>Relief route assignment: ${reliefRouteMode==='rotate'?'Rotating (as needed)':'Fixed (spill to free)'}`;
-    $('note').textContent = `Generated for ${weeks} weeks starting ${startDate.toLocaleDateString('en-GB')}`;
-
-    // Attach chip click handler (delegate)
-    attachChipEditing();
-  }
-
-  // ===== Chip editing (set/clear Holiday) =====
-  const chipMenu = $('chipMenu');
-  const chipAction = $('chipAction');
-  const chipApply = $('chipApply');
-  const chipCancel = $('chipCancel');
-  let activeChip = null; // DOM element
-  let activeMeta = null; // { day, route, base }
-
-  function attachChipEditing(){
-    const grid = $('rotaGrid');
-    grid.removeEventListener('click', chipClickHandler);
-    grid.addEventListener('click', chipClickHandler);
-    document.addEventListener('click', (e)=>{
-      if(!chipMenu.contains(e.target) && (!activeChip || !activeChip.contains(e.target))){
-        hideChipMenu();
-      }
-    });
-  }
-
-  function chipClickHandler(e){
-    const chip = e.target.closest('.chip');
-    if(!chip || chip.getAttribute('aria-disabled')==='true') return;
-    activeChip = chip;
-    const rect = chip.getBoundingClientRect();
-    const scrollY = window.scrollY || document.documentElement.scrollTop;
-    const scrollX = window.scrollX || document.documentElement.scrollLeft;
-
-    const day = parseInt(chip.getAttribute('data-day'),10);
-    const route = parseInt(chip.getAttribute('data-route'),10);
-    const base = chip.getAttribute('data-base');
-
-    activeMeta = { day, route, base };
-    chipAction.value = chip.classList.contains('holiday') ? 'clearHoliday' : 'setHoliday';
-
-    chipMenu.style.left = (rect.left + scrollX) + 'px';
-    chipMenu.style.top  = (rect.bottom + scrollY + 6) + 'px';
-    chipMenu.style.display = 'block';
-    chipMenu.setAttribute('aria-hidden','false');
-  }
-
-  function hideChipMenu(){
-    chipMenu.style.display='none';
-    chipMenu.setAttribute('aria-hidden','true');
-    activeChip = null;
-    activeMeta = null;
-  }
-
-  chipApply.addEventListener('click', ()=>{
-    if(!activeChip || !activeMeta) return;
-    const {day, route, base} = activeMeta;
-    const action = chipAction.value;
-
-    if(action==='setHoliday'){
-      activeChip.classList.add('holiday');
-      activeChip.textContent = `${base} Holiday`;
-      activeChip.setAttribute('data-base', base);
-      if(rota[day] && Array.isArray(rota[day].assigned) && route>=0){
-        rota[day].assigned[route] = `${base} Holiday`;
-      }
-    } else {
-      activeChip.classList.remove('holiday');
-      activeChip.textContent = base;
-      if(rota[day] && Array.isArray(rota[day].assigned) && route>=0){
-        rota[day].assigned[route] = base;
+        return JSON.parse(raw);
+      } catch (e) {
+        return JSON.parse(JSON.stringify(defaultData));
       }
     }
-    hideChipMenu();
-    renderTablesFromCtx(); // refresh summary/driver grid
-  });
-  chipCancel.addEventListener('click', hideChipMenu);
-  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') hideChipMenu(); });
 
-  // ===== Bulk Holiday Tool =====
-  function populateHolidayDriverOptions(names){
-    const sel = $('holidayDriver');
-    sel.innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join('');
-  }
-
-  function renderHolidayList(){
-    const el = $('holidayList');
-    if(holidays.length===0){ el.innerHTML = '<p class="small muted" style="padding:8px">No holidays queued.</p>'; return; }
-    let h = '<table><thead><tr><th>#</th><th>Driver</th><th>Start</th><th>End</th><th></th></tr></thead><tbody>';
-    holidays.forEach((x,i)=>{
-      h += `<tr><td>${i+1}</td><td><span class="chip ${getDriverClass(x.driver)}">${x.driver}</span></td><td>${x.start}</td><td>${x.end}</td><td><button class="btn small danger" data-del="${i}">Remove</button></td></tr>`;
-    });
-    h += '</tbody></table>';
-    el.innerHTML = h;
-    el.querySelectorAll('button[data-del]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const idx = parseInt(btn.getAttribute('data-del'),10);
-        holidays.splice(idx,1);
-        renderHolidayList();
-      });
-    });
-  }
-
-  $('addHoliday').addEventListener('click', ()=>{
-    const driver = $('holidayDriver').value;
-    const s = $('holidayStart').value;
-    const e = $('holidayEnd').value || s;
-    if(!driver){ return setError('Choose a driver for the holiday.'); }
-    if(!s){ return setError('Choose a start date for the holiday.'); }
-    if(e < s){ return setError('End date cannot be before start date.'); }
-    setError('');
-    holidays.push({driver, start:s, end:e});
-    renderHolidayList();
-    setOk(`Added holiday for ${driver} (${s} → ${e}).`);
-  });
-
-  $('clearHolidays').addEventListener('click', ()=>{
-    holidays = [];
-    renderHolidayList();
-    setOk('Cleared holiday list.');
-  });
-
-  $('applyHoliday').addEventListener('click', ()=>{
-    if(!rota.length) return setError('Build the rota first.');
-    if(!holidays.length) return setError('Add at least one holiday to apply.');
-    // First clear existing " Holiday" labels to avoid duplicates stacking
-    for(const row of rota){
-      row.assigned = row.assigned.map(a => (a && a.endsWith(' Holiday')) ? a.replace(/ Holiday$/,'') : a);
-      const sp = row.spares.split(', ').filter(Boolean).map(s => (s.endsWith(' Holiday')? s.replace(/ Holiday$/,'') : s));
-      row.spares = sp.join(', ');
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
-    // Apply holidays
-    for(const h of holidays){
-      for(const row of rota){
-        if(between(row.dateStr, h.start, h.end)){
-          const idx = row.assigned.findIndex(a => a && (a.endsWith(' Holiday')? a.replace(/ Holiday$/,'') : a) === h.driver);
-          if(idx > -1) row.assigned[idx] = `${h.driver} Holiday`;
-          const spList = row.spares.split(', ').filter(Boolean);
-          const sIdx = spList.findIndex(s => (s.endsWith(' Holiday') ? s.replace(/ Holiday$/,'') : s) === h.driver);
-          if(sIdx > -1) spList[sIdx] = `${h.driver} Holiday`;
-          row.spares = spList.join(', ');
-        }
+
+    let state = loadData();
+
+    const fmtMoney = (n) =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+      }).format(Number(n || 0));
+
+    function categoryClass(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/[^\w-]/g, "") || "other";
+    }
+
+    function sum(list, key) {
+      return list.reduce((acc, item) => acc + Number(item[key] || 0), 0);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function render() {
+      const totalIncome = sum(state.income, "amount");
+      const totalExpenses = sum(state.expenses, "amount");
+      const totalDebts = sum(state.debts, "balance");
+      const totalLiabilities = totalExpenses + totalDebts;
+      const totalAssets = sum(state.assets, "value");
+      const netCashFlow = totalIncome - totalExpenses;
+      const netWorth = totalAssets - totalDebts;
+
+      document.getElementById("totalIncome").textContent = fmtMoney(totalIncome);
+      document.getElementById("totalLiabilities").textContent = fmtMoney(totalLiabilities);
+      document.getElementById("totalAssets").textContent = fmtMoney(totalAssets);
+      document.getElementById("netCashflow").textContent = (netCashFlow >= 0 ? "+" : "") + fmtMoney(netCashFlow);
+      document.getElementById("cashflowNote").textContent = netCashFlow >= 0 ? "Positive cash flow" : "Negative cash flow";
+      document.getElementById("incomePageTotal").textContent = fmtMoney(totalIncome);
+      document.getElementById("assetPageTotal").textContent = fmtMoney(totalAssets);
+      document.getElementById("netWorthValue").textContent = fmtMoney(netWorth);
+      document.getElementById("netWorthNote").textContent = fmtMoney(totalAssets) + " assets - " + fmtMoney(totalDebts) + " debts";
+
+      renderIncomeTable();
+      renderExpenseTable();
+      renderDebtTable();
+      renderAssetTable();
+      renderLegends();
+      renderCashflowChart(totalIncome, totalExpenses);
+      renderNetWorthTrend(netWorth);
+    }
+
+    function renderIncomeTable() {
+      const tbody = document.getElementById("incomeTable");
+      if (!state.income.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty">No income added yet.</div></td></tr>';
+        return;
       }
+      tbody.innerHTML = state.income.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.source)}</td>
+          <td><span class="pill ${categoryClass(item.category)}">${escapeHtml(item.category)}</span></td>
+          <td class="amount-income">${fmtMoney(item.amount)}</td>
+          <td>${item.recurring ? "Yes" : "No"}</td>
+        </tr>
+      `).join("");
     }
-    renderTablesFromCtx();
-    setOk('Holidays applied to rota.');
-  });
 
-  function applyHolidaysToRota(){
-    if(!holidays.length) return;
-    // reuse apply logic
-    $('applyHoliday').click();
-  }
+    function renderExpenseTable() {
+      const tbody = document.getElementById("expenseTable");
+      if (!state.expenses.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty">No expenses added yet.</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = state.expenses.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.name)}</td>
+          <td><span class="pill ${categoryClass(item.category)}">${escapeHtml(item.category)}</span></td>
+          <td class="amount-liability">${fmtMoney(item.amount)}</td>
+          <td>${item.recurring ? "Yes" : "No"}</td>
+        </tr>
+      `).join("");
+    }
 
-  // ===== CSV export (reflects holiday labels) =====
-  $('csv').addEventListener('click', ()=>{
-    if (!rota.length){ return setError('Build the rota first.'); }
-    setError('');
-    const R = runsGlobal || int($('runs').value,3);
-    const hasSpare = rota.some(item=>item.spares);
-    let csv = 'Date,Day';
-    for(let r=1;r<=R;r++) csv += `,Run ${r}`;
-    if (hasSpare) csv += ',Spare';
-    csv += '\n';
-    rota.forEach(item=>{
-      csv += `${item.dateStr},${item.dayName}`;
-      item.assigned.forEach(a=> csv += `,${a||''}`);
-      if (hasSpare) csv += `,${item.spares}`;
-      csv += '\n';
-    });
-    // Summary
-    const allDriversSet = new Set();
-    rota.forEach(item=>{
-      item.assigned.forEach(a=>{ if(a){ const base=a.endsWith(' Holiday')?a.replace(/ Holiday$/,''):a; allDriversSet.add(base); }});
-      item.spares.split(', ').forEach(s=>{ if(s){ const base=s.endsWith(' Holiday')?s.replace(/ Holiday$/,''):s; allDriversSet.add(base); }});
-    });
-    csv += '\nSummary\nDriver,Run days,Spare days,Total On-days\n';
-    [...allDriversSet].sort().forEach(n=>{
-      let runsC=0, sparesC=0;
-      rota.forEach(item=>{
-        if(item.assigned.some(a=>a && (a.endsWith(' Holiday')?a.replace(/ Holiday$/,''):a)===n)) runsC++;
-        if(item.spares.split(', ').some(s=> (s.endsWith(' Holiday')?s.replace(/ Holiday$/,''):s)===n)) sparesC++;
+    function renderDebtTable() {
+      const tbody = document.getElementById("debtTable");
+      if (!state.debts.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty">No debts added yet.</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = state.debts.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.name)}</td>
+          <td>${escapeHtml(item.category)}</td>
+          <td class="amount-liability">${fmtMoney(item.balance)}</td>
+          <td>${escapeHtml(item.notes || "—")}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAssetTable() {
+      const tbody = document.getElementById("assetTable");
+      if (!state.assets.length) {
+        tbody.innerHTML = '<tr><td colspan="4"><div class="empty">No assets added yet.</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = state.assets.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.name)}</td>
+          <td><span class="pill ${categoryClass(item.type)}">${escapeHtml(item.type)}</span></td>
+          <td class="amount-asset">${fmtMoney(item.value)}</td>
+          <td>${escapeHtml(item.detail || item.quantity || "—")}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderLegends() {
+      const totals = {};
+      state.assets.forEach(a => {
+        const key = a.type || "Other";
+        totals[key] = (totals[key] || 0) + Number(a.value || 0);
       });
-      csv += `${n},${runsC},${sparesC},${runsC+sparesC}\n`;
-    });
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-    const url  = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href=url; a.download=`rota_${toISO(new Date())}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    setOk('CSV exported.');
-  });
 
-})();
-</script>
+      const grand = Object.values(totals).reduce((a,b)=>a+b,0) || 1;
+      const rows = Object.entries(totals).map(([type, val]) => {
+        const pct = Math.round((val / grand) * 100);
+        return `
+          <div class="legend-row">
+            <div class="legend-left">
+              <span class="dot ${categoryClass(type)}"></span>
+              <span>${escapeHtml(type)}</span>
+            </div>
+            <div class="legend-right">
+              <span>${fmtMoney(val)}</span>
+              <span>${pct}%</span>
+            </div>
+          </div>
+        `;
+      }).join("") || '<div class="empty">No asset allocation data yet.</div>';
+
+      document.getElementById("assetLegend").innerHTML = rows;
+      document.getElementById("progressLegend").innerHTML = rows;
+    }
+
+    function renderCashflowChart(incomeTotal, expenseTotal) {
+      const el = document.getElementById("cashflowChart");
+      const months = ["Oct","Nov","Dec","Jan","Feb","Mar"];
+      const incomeSeries = [0,0,0,incomeTotal * 0.84, incomeTotal * 0.96, incomeTotal];
+      const expenseSeries = [0,0,0,0,expenseTotal * 0.92, expenseTotal];
+      const maxVal = Math.max(...incomeSeries, ...expenseSeries, 1);
+
+      el.innerHTML = months.map((m, i) => `
+        <div class="bar-group">
+          <div class="bar income" style="height:${(incomeSeries[i] / maxVal) * 100}%"></div>
+          <div class="bar liability" style="height:${(expenseSeries[i] / maxVal) * 100}%"></div>
+          <div class="bar-label">${m}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderNetWorthTrend(netWorth) {
+      const el = document.getElementById("netWorthTrend");
+      const months = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
+      const series = months.map((_, i) => Math.max(0, netWorth * ((i + 1) / months.length) * 0.92 + (i * 250)));
+      const maxVal = Math.max(...series, 1);
+
+      el.innerHTML = months.map((m, i) => `
+        <div class="bar-group">
+          <div class="bar income" style="height:${(series[i] / maxVal) * 100}%"></div>
+          <div class="bar-label">${m}</div>
+        </div>
+      `).join("");
+    }
+
+    function openModal(name) {
+      document.getElementById("modal-" + name).classList.add("open");
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal").forEach(m => m.classList.remove("open"));
+    }
+
+    function downloadCSV() {
+      const rows = [
+        ["Type","Name","Category","Amount/Value","Recurring","Notes"],
+        ...state.income.map(i => ["Income", i.source, i.category, i.amount, i.recurring ? "Yes" : "No", i.notes || ""]),
+        ...state.expenses.map(i => ["Expense", i.name, i.category, i.amount, i.recurring ? "Yes" : "No", i.notes || ""]),
+        ...state.debts.map(i => ["Debt", i.name, i.category, i.balance, "", i.notes || ""]),
+        ...state.assets.map(i => ["Asset", i.name, i.type, i.value, "", i.notes || ""])
+      ];
+
+      const csv = rows.map(row =>
+        row.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(",")
+      ).join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "wealthos-export.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("menuBtn").addEventListener("click", () => {
+      document.getElementById("sideMenu").classList.toggle("open");
+    });
+
+    document.querySelectorAll(".nav-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const page = btn.dataset.page;
+
+        document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById("page-" + page).classList.add("active");
+
+        document.getElementById("sideMenu").classList.remove("open");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+
+    document.querySelectorAll("[data-open]").forEach(btn => {
+      btn.addEventListener("click", () => openModal(btn.dataset.open));
+    });
+
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", closeModals);
+    });
+
+    document.querySelectorAll(".modal").forEach(modal => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModals();
+      });
+    });
+
+    document.getElementById("incomeForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      state.income.push({
+        source: fd.get("source"),
+        category: fd.get("category"),
+        amount: Number(fd.get("amount")),
+        recurring: fd.get("recurring") === "on",
+        notes: fd.get("notes")
+      });
+      saveData();
+      render();
+      e.target.reset();
+      closeModals();
+    });
+
+    document.getElementById("expenseForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      state.expenses.push({
+        name: fd.get("name"),
+        category: fd.get("category"),
+        amount: Number(fd.get("amount")),
+        recurring: fd.get("recurring") === "on",
+        notes: fd.get("notes")
+      });
+      saveData();
+      render();
+      e.target.reset();
+      closeModals();
+    });
+
+    document.getElementById("debtForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      state.debts.push({
+        name: fd.get("name"),
+        category: fd.get("category"),
+        balance: Number(fd.get("balance")),
+        notes: fd.get("notes")
+      });
+      saveData();
+      render();
+      e.target.reset();
+      closeModals();
+    });
+
+    document.getElementById("assetForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      state.assets.push({
+        name: fd.get("name"),
+        type: fd.get("type"),
+        value: Number(fd.get("value")),
+        quantity: fd.get("quantity"),
+        detail: fd.get("detail"),
+        notes: fd.get("notes")
+      });
+      saveData();
+      render();
+      e.target.reset();
+      closeModals();
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", downloadCSV);
+
+    render();
+  </script>
 </body>
 </html>

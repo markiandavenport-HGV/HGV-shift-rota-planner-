@@ -29,7 +29,7 @@
     .app{
       max-width:1120px;
       margin:0 auto;
-      padding:18px 14px 28px;
+      padding:18px 18px 28px;
     }
 
     .topbar{
@@ -118,11 +118,21 @@
       grid-template-columns:1fr 340px;
       gap:16px;
       margin-bottom:16px;
+      align-items:start;
+    }
+
+    .balance-layout{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      gap:16px;
+      margin-bottom:10px;
+      align-items:start;
     }
 
     .box{
       border:2px solid var(--line);
       background:#fff;
+      width:100%;
     }
 
     .box-title{
@@ -308,13 +318,6 @@
     .cashflow-value{
       font-size:22px;
       font-weight:700;
-    }
-
-    .balance-layout{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:16px;
-      margin-bottom:10px;
     }
 
     .total-row td{
@@ -576,7 +579,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "kyosaki-financial-statement-v5";
+    const STORAGE_KEY = "kyosaki-financial-statement-v4";
 
     function monthKeyFromDate(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -623,30 +626,7 @@
       selectedMonth: currentMonthKey(),
       btc200wma: "",
       months: {
-        [currentMonthKey()]: {
-          income: [
-            { id: uid("inc"), description: "Salary", amount: 3200 },
-            { id: uid("inc"), description: "Interest / Dividends", amount: 250 },
-            { id: uid("inc"), description: "Real Estate / Business", amount: 450 }
-          ],
-          expenses: [
-            { id: uid("exp"), description: "Taxes", amount: 350 },
-            { id: uid("exp"), description: "Home Mortgage Payment", amount: 1200 },
-            { id: uid("exp"), description: "Car Loan Payment", amount: 220 },
-            { id: uid("exp"), description: "Other Expenses", amount: 300 }
-          ],
-          assets: [
-            { id: uid("ast"), description: "Savings", quantity: 1, unitPrice: 8000, amount: 8000 },
-            { id: uid("ast"), description: "Stocks / Funds / CDs", quantity: 1, unitPrice: 4500, amount: 4500 },
-            { id: uid("ast"), description: "Real Estate / Business", quantity: 1, unitPrice: 15000, amount: 15000 },
-            { id: uid("ast"), description: "Bitcoin", quantity: 0.25, unitPrice: "", amount: 0 }
-          ],
-          liabilities: [
-            { id: uid("lia"), description: "Home Mortgage", amount: 6500 },
-            { id: uid("lia"), description: "Car Loans", amount: 2400 },
-            { id: uid("lia"), description: "Credit Cards", amount: 900 }
-          ]
-        }
+        [currentMonthKey()]: blankMonth()
       }
     };
 
@@ -668,14 +648,32 @@
       };
     }
 
-    function normalizeAssetRow(row) {
+    function migrateAssetRow(row) {
       if (!row) return blankAssetRow();
+
+      if ("quantity" in row || "unitPrice" in row) {
+        return {
+          id: row.id || uid("ast"),
+          description: typeof row.description === "string" ? row.description : "",
+          quantity: row.quantity === "" || row.quantity === null || row.quantity === undefined ? "" : safeNumber(row.quantity),
+          unitPrice: row.unitPrice === "" || row.unitPrice === null || row.unitPrice === undefined ? "" : safeNumber(row.unitPrice),
+          amount: row.amount !== undefined ? safeNumber(row.amount) : 0
+        };
+      }
+
+      const oldAmount = safeNumber(row.amount);
+      const oldType = String(row.assetType || "");
+      const oldDesc = typeof row.description === "string" ? row.description : "";
+      const description = oldType && !oldDesc ? oldType : oldDesc;
+      const quantity = oldAmount ? 1 : "";
+      const isBitcoin = oldType.toLowerCase() === "bitcoin" || oldDesc.toLowerCase().includes("bitcoin");
+
       return {
         id: row.id || uid("ast"),
-        description: typeof row.description === "string" ? row.description : "",
-        quantity: row.quantity === "" || row.quantity === null || row.quantity === undefined ? "" : safeNumber(row.quantity),
-        unitPrice: row.unitPrice === "" || row.unitPrice === null || row.unitPrice === undefined ? "" : safeNumber(row.unitPrice),
-        amount: row.amount !== undefined ? safeNumber(row.amount) : 0
+        description: description,
+        quantity: quantity,
+        unitPrice: isBitcoin ? "" : (oldAmount ? oldAmount : ""),
+        amount: oldAmount
       };
     }
 
@@ -683,7 +681,7 @@
       return {
         income: Array.isArray(month && month.income) ? month.income.map(r => normalizeRow(r, "inc")) : [],
         expenses: Array.isArray(month && month.expenses) ? month.expenses.map(r => normalizeRow(r, "exp")) : [],
-        assets: Array.isArray(month && month.assets) ? month.assets.map(r => normalizeAssetRow(r)) : [],
+        assets: Array.isArray(month && month.assets) ? month.assets.map(r => migrateAssetRow(r)) : [],
         liabilities: Array.isArray(month && month.liabilities) ? month.liabilities.map(r => normalizeRow(r, "lia")) : []
       };
     }
@@ -692,6 +690,7 @@
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return deepCopy(defaultData);
+
         const parsed = JSON.parse(raw);
         const state = {
           currency: parsed.currency || "GBP",
@@ -699,14 +698,17 @@
           btc200wma: parsed.btc200wma === undefined ? "" : parsed.btc200wma,
           months: {}
         };
+
         if (parsed.months && typeof parsed.months === "object") {
           for (const key in parsed.months) {
             state.months[key] = normalizeMonth(parsed.months[key]);
           }
         }
+
         if (!state.months[state.selectedMonth]) {
           state.months[state.selectedMonth] = blankMonth();
         }
+
         return state;
       } catch (e) {
         return deepCopy(defaultData);
@@ -721,6 +723,7 @@
 
     function ensureMonthExists(monthKey) {
       if (state.months[monthKey]) return;
+
       const previousKey = shiftMonth(monthKey, -1);
       if (state.months[previousKey]) {
         state.months[monthKey] = {
@@ -798,6 +801,7 @@
         tbody.innerHTML = '<tr><td colspan="3" class="empty">No rows yet.</td></tr>';
         return;
       }
+
       tbody.innerHTML = rows.map((row, index) => `
         <tr>
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
@@ -838,6 +842,7 @@
         tbody.innerHTML = '<tr><td colspan="3" class="empty">No rows yet.</td></tr>';
         return;
       }
+
       tbody.innerHTML = rows.map((row, index) => `
         <tr>
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>

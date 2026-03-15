@@ -12,6 +12,7 @@
       --muted:#5a5a5a;
       --panel:#ffffff;
       --soft:#ecece7;
+      --warn:#8a5a00;
     }
 
     *{box-sizing:border-box}
@@ -27,7 +28,7 @@
     body{min-height:100vh}
 
     .app{
-      max-width:1120px;
+      max-width:1180px;
       margin:0 auto;
       padding:18px 14px 28px;
     }
@@ -146,7 +147,7 @@
     }
 
     th,td{
-      padding:6px 10px;
+      padding:6px 8px;
       border-bottom:1px solid #8a8a8a;
       vertical-align:middle;
       font-size:13px;
@@ -160,9 +161,11 @@
       text-transform:uppercase;
       letter-spacing:.5px;
       text-align:left;
+      white-space:nowrap;
     }
 
-    td input{
+    td input,
+    td select{
       width:100%;
       border:0;
       border-bottom:1px solid #777;
@@ -172,11 +175,27 @@
       color:#111;
       outline:none;
       font-family:Arial, Helvetica, sans-serif;
+      border-radius:0;
     }
 
     td input[type="number"]{
       text-align:right;
-      min-width:88px;
+      min-width:72px;
+    }
+
+    td select{
+      padding-left:0;
+    }
+
+    .readonly-cell{
+      font-family:Arial, Helvetica, sans-serif;
+      text-align:right;
+      white-space:nowrap;
+    }
+
+    .readonly-cell.warn{
+      color:var(--warn);
+      font-size:11px;
     }
 
     .actions{
@@ -297,6 +316,8 @@
       padding-top:10px;
       display:flex;
       justify-content:flex-end;
+      gap:24px;
+      flex-wrap:wrap;
     }
 
     .footer-item{
@@ -326,7 +347,7 @@
       font-size:12px;
     }
 
-    @media (max-width:920px){
+    @media (max-width:1020px){
       .income-layout,
       .balance-layout{
         grid-template-columns:1fr;
@@ -337,7 +358,7 @@
       }
     }
 
-    @media (max-width:640px){
+    @media (max-width:760px){
       .summary-side{
         grid-template-columns:1fr;
       }
@@ -478,14 +499,17 @@
               <thead>
                 <tr>
                   <th>Description</th>
-                  <th style="width:140px;">Value</th>
+                  <th style="width:110px;">Type</th>
+                  <th style="width:90px;">Qty</th>
+                  <th style="width:110px;">Price</th>
+                  <th style="width:110px;">Total</th>
                   <th style="width:74px;"></th>
                 </tr>
               </thead>
               <tbody id="assetTable"></tbody>
               <tfoot>
                 <tr class="total-row">
-                  <td>Total Assets</td>
+                  <td colspan="4">Total Assets</td>
                   <td class="total-value" id="assetTotalRow">£0</td>
                   <td></td>
                 </tr>
@@ -531,6 +555,8 @@
 
   <script>
     const STORAGE_KEY = "kyosaki-financial-statement-v4";
+    let btc200wma = null;
+    let btcFetchError = false;
 
     function monthKeyFromDate(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -562,6 +588,17 @@
       return { income: [], expenses: [], assets: [], liabilities: [] };
     }
 
+    function blankAssetRow() {
+      return {
+        id: uid("ast"),
+        description: "",
+        assetType: "Cash",
+        quantity: "",
+        unitPrice: "",
+        amount: 0
+      };
+    }
+
     const defaultData = {
       currency: "GBP",
       selectedMonth: currentMonthKey(),
@@ -579,9 +616,10 @@
             { id: uid("exp"), description: "Other Expenses", amount: 300 }
           ],
           assets: [
-            { id: uid("ast"), description: "Savings", amount: 8000 },
-            { id: uid("ast"), description: "Stocks / Funds / CDs", amount: 4500 },
-            { id: uid("ast"), description: "Real Estate / Business", amount: 15000 }
+            { id: uid("ast"), description: "Savings", assetType: "Cash", quantity: 1, unitPrice: 8000, amount: 8000 },
+            { id: uid("ast"), description: "Stocks / Funds / CDs", assetType: "Equity", quantity: 1, unitPrice: 4500, amount: 4500 },
+            { id: uid("ast"), description: "Real Estate / Business", assetType: "Real Estate", quantity: 1, unitPrice: 15000, amount: 15000 },
+            { id: uid("ast"), description: "Bitcoin", assetType: "Bitcoin", quantity: 0.25, unitPrice: "", amount: 0 }
           ],
           liabilities: [
             { id: uid("lia"), description: "Home Mortgage", amount: 6500 },
@@ -596,11 +634,44 @@
       return JSON.parse(JSON.stringify(obj));
     }
 
+    function safeNumber(value) {
+      if (value === "" || value === null || value === undefined) return 0;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
     function normalizeRow(row, prefix) {
       return {
         id: row && row.id ? row.id : uid(prefix),
         description: row && typeof row.description === "string" ? row.description : "",
-        amount: row && !isNaN(Number(row.amount)) ? Number(row.amount) : 0
+        amount: row && row.amount !== undefined && row.amount !== null && row.amount !== "" ? safeNumber(row.amount) : 0
+      };
+    }
+
+    function normalizeAssetRow(row) {
+      if (!row) return blankAssetRow();
+
+      const hasNewShape = "assetType" in row || "quantity" in row || "unitPrice" in row;
+
+      if (hasNewShape) {
+        return {
+          id: row.id || uid("ast"),
+          description: typeof row.description === "string" ? row.description : "",
+          assetType: row.assetType || "Cash",
+          quantity: row.quantity === "" || row.quantity === null || row.quantity === undefined ? "" : safeNumber(row.quantity),
+          unitPrice: row.unitPrice === "" || row.unitPrice === null || row.unitPrice === undefined ? "" : safeNumber(row.unitPrice),
+          amount: row.amount !== undefined ? safeNumber(row.amount) : 0
+        };
+      }
+
+      const oldAmount = safeNumber(row.amount);
+      return {
+        id: row.id || uid("ast"),
+        description: typeof row.description === "string" ? row.description : "",
+        assetType: "Cash",
+        quantity: oldAmount ? 1 : "",
+        unitPrice: oldAmount ? oldAmount : "",
+        amount: oldAmount
       };
     }
 
@@ -608,7 +679,7 @@
       return {
         income: Array.isArray(month && month.income) ? month.income.map(r => normalizeRow(r, "inc")) : [],
         expenses: Array.isArray(month && month.expenses) ? month.expenses.map(r => normalizeRow(r, "exp")) : [],
-        assets: Array.isArray(month && month.assets) ? month.assets.map(r => normalizeRow(r, "ast")) : [],
+        assets: Array.isArray(month && month.assets) ? month.assets.map(r => normalizeAssetRow(r)) : [],
         liabilities: Array.isArray(month && month.liabilities) ? month.liabilities.map(r => normalizeRow(r, "lia")) : []
       };
     }
@@ -670,6 +741,13 @@
       ).format(Number(n || 0));
     }
 
+    function fmtPrice(n) {
+      return new Intl.NumberFormat(
+        state.currency === "GBP" ? "en-GB" : "en-US",
+        { style: "currency", currency: state.currency, maximumFractionDigits: 2 }
+      ).format(Number(n || 0));
+    }
+
     function sumRows(rows) {
       return rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
     }
@@ -691,7 +769,24 @@
         .replace(/'/g, "&#039;");
     }
 
-    function renderTable(tbodyId, rows, type) {
+    function assetAmount(row) {
+      const qty = safeNumber(row.quantity);
+      const type = row.assetType || "Cash";
+
+      if (type === "Bitcoin") {
+        return btc200wma ? qty * btc200wma : 0;
+      }
+
+      return qty * safeNumber(row.unitPrice);
+    }
+
+    function recalcAssets(month) {
+      month.assets.forEach(row => {
+        row.amount = assetAmount(row);
+      });
+    }
+
+    function renderIncomeExpenseTable(tbodyId, rows, type) {
       const tbody = document.getElementById(tbodyId);
       if (!rows.length) {
         tbody.innerHTML = '<tr><td colspan="3" class="empty">No rows yet.</td></tr>';
@@ -700,14 +795,79 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr>
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
-          <td><input type="number" step="0.01" value="${Number(row.amount || 0)}" data-type="${type}" data-index="${index}" data-field="amount"></td>
+          <td><input type="number" step="0.01" value="${row.amount === 0 ? "" : row.amount}" data-type="${type}" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
+        </tr>
+      `).join("");
+    }
+
+    function renderAssetTable(rows) {
+      const tbody = document.getElementById("assetTable");
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">No rows yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = rows.map((row, index) => {
+        const type = row.assetType || "Cash";
+        const isBitcoin = type === "Bitcoin";
+        const qtyValue = row.quantity === "" ? "" : row.quantity;
+        const priceValue = row.unitPrice === "" ? "" : row.unitPrice;
+        const total = assetAmount(row);
+
+        let priceCell = "";
+        if (isBitcoin) {
+          if (btc200wma) {
+            priceCell = `<div class="readonly-cell">${fmtPrice(btc200wma)}</div>`;
+          } else if (btcFetchError) {
+            priceCell = `<div class="readonly-cell warn">Unavailable</div>`;
+          } else {
+            priceCell = `<div class="readonly-cell">Loading…</div>`;
+          }
+        } else {
+          priceCell = `<input type="number" step="0.01" value="${priceValue}" data-type="assets" data-index="${index}" data-field="unitPrice">`;
+        }
+
+        return `
+          <tr>
+            <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
+            <td>
+              <select data-type="assets" data-index="${index}" data-field="assetType">
+                <option value="Real Estate" ${type === "Real Estate" ? "selected" : ""}>Real Estate</option>
+                <option value="Gold" ${type === "Gold" ? "selected" : ""}>Gold</option>
+                <option value="Bitcoin" ${type === "Bitcoin" ? "selected" : ""}>Bitcoin</option>
+                <option value="Equity" ${type === "Equity" ? "selected" : ""}>Equity</option>
+                <option value="Cash" ${type === "Cash" ? "selected" : ""}>Cash</option>
+              </select>
+            </td>
+            <td><input type="number" step="0.00000001" value="${qtyValue}" data-type="assets" data-index="${index}" data-field="quantity"></td>
+            <td>${priceCell}</td>
+            <td class="readonly-cell">${fmtMoney(total)}</td>
+            <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderLiabilityTable(rows) {
+      const tbody = document.getElementById("liabilityTable");
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">No rows yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map((row, index) => `
+        <tr>
+          <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
+          <td><input type="number" step="0.01" value="${row.amount === 0 ? "" : row.amount}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
+          <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
     }
 
     function renderTotals() {
       const month = currentMonth();
+      recalcAssets(month);
+
       const totalIncome = sumRows(month.income);
       const totalExpenses = sumRows(month.expenses);
       const totalAssets = sumRows(month.assets);
@@ -727,17 +887,24 @@
 
     function render() {
       const month = currentMonth();
+      recalcAssets(month);
+
       document.getElementById("monthLabel").textContent = formatMonthLabel(state.selectedMonth);
       document.getElementById("currencySelect").value = state.currency;
-      renderTable("incomeTable", month.income, "income");
-      renderTable("expenseTable", month.expenses, "expenses");
-      renderTable("assetTable", month.assets, "assets");
-      renderTable("liabilityTable", month.liabilities, "liabilities");
+
+      renderIncomeExpenseTable("incomeTable", month.income, "income");
+      renderIncomeExpenseTable("expenseTable", month.expenses, "expenses");
+      renderAssetTable(month.assets);
+      renderLiabilityTable(month.liabilities);
       renderTotals();
     }
 
     function addRow(type) {
-      currentMonth()[type].push({ id: uid(type.slice(0, 3)), description: "", amount: 0 });
+      if (type === "assets") {
+        currentMonth().assets.push(blankAssetRow());
+      } else {
+        currentMonth()[type].push({ id: uid(type.slice(0, 3)), description: "", amount: 0 });
+      }
       saveState();
       render();
     }
@@ -751,46 +918,98 @@
     function updateField(type, index, field, value) {
       const row = currentMonth()[type][index];
       if (!row) return;
-      row[field] = field === "amount" ? Number(value || 0) : value;
+
+      if (type === "assets") {
+        if (field === "assetType") {
+          row.assetType = value;
+          if (value === "Bitcoin") {
+            row.unitPrice = "";
+          }
+        } else if (field === "quantity") {
+          row.quantity = value === "" ? "" : safeNumber(value);
+        } else if (field === "unitPrice") {
+          row.unitPrice = value === "" ? "" : safeNumber(value);
+        } else {
+          row[field] = value;
+        }
+        row.amount = assetAmount(row);
+      } else {
+        row[field] = field === "amount" ? safeNumber(value) : value;
+      }
+
       saveState();
-      renderTotals();
+      render();
+    }
+
+    async function fetchBitcoin200WMA() {
+      btcFetchError = false;
+
+      try {
+        const vsCurrency = state.currency === "GBP" ? "gbp" : "usd";
+        const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=${vsCurrency}&days=1460&interval=daily`;
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) throw new Error("BTC fetch failed");
+        const data = await response.json();
+        const prices = Array.isArray(data.prices) ? data.prices : [];
+
+        const weekly = [];
+        for (let i = prices.length - 1; i >= 0 && weekly.length < 200; i -= 7) {
+          if (prices[i] && Number.isFinite(Number(prices[i][1]))) {
+            weekly.unshift(Number(prices[i][1]));
+          }
+        }
+
+        if (!weekly.length) throw new Error("No BTC data");
+
+        btc200wma = weekly.reduce((a, b) => a + b, 0) / weekly.length;
+        btcFetchError = false;
+      } catch (err) {
+        btc200wma = null;
+        btcFetchError = true;
+      }
+
+      saveState();
+      render();
     }
 
     document.addEventListener("input", function(e){
-      const target = e.target;
-      if (!target.matches("input[data-type]")) return;
-      updateField(
-        target.dataset.type,
-        Number(target.dataset.index),
-        target.dataset.field,
-        target.value
-      );
+      const t = e.target;
+      if (!t.matches("input[data-type]")) return;
+      updateField(t.dataset.type, Number(t.dataset.index), t.dataset.field, t.value);
+    });
+
+    document.addEventListener("change", function(e){
+      const t = e.target;
+      if (!t.matches("select[data-type]")) return;
+      updateField(t.dataset.type, Number(t.dataset.index), t.dataset.field, t.value);
     });
 
     document.addEventListener("click", function(e){
-      const target = e.target;
+      const t = e.target;
 
-      if (target.id === "addIncome") addRow("income");
-      if (target.id === "addExpense") addRow("expenses");
-      if (target.id === "addAsset") addRow("assets");
-      if (target.id === "addLiability") addRow("liabilities");
+      if (t.id === "addIncome") addRow("income");
+      if (t.id === "addExpense") addRow("expenses");
+      if (t.id === "addAsset") addRow("assets");
+      if (t.id === "addLiability") addRow("liabilities");
 
-      if (target.id === "prevMonth") {
+      if (t.id === "prevMonth") {
         state.selectedMonth = shiftMonth(state.selectedMonth, -1);
         ensureMonthExists(state.selectedMonth);
         saveState();
         render();
       }
 
-      if (target.id === "nextMonth") {
+      if (t.id === "nextMonth") {
         state.selectedMonth = shiftMonth(state.selectedMonth, 1);
         ensureMonthExists(state.selectedMonth);
         saveState();
         render();
       }
 
-      if (target.id === "exportBtn") {
+      if (t.id === "exportBtn") {
         const month = currentMonth();
+        recalcAssets(month);
+
         const rows = [
           ["Month", state.selectedMonth],
           ["Currency", state.currency],
@@ -811,9 +1030,15 @@
           [],
           ["Balance Sheet"],
           ["Assets"],
-          ["Description", "Amount"],
-          ...month.assets.map(r => [r.description, r.amount]),
-          ["Total Assets", sumRows(month.assets)],
+          ["Description", "Type", "Quantity", "Price", "Total"],
+          ...month.assets.map(r => [
+            r.description,
+            r.assetType,
+            r.quantity,
+            r.assetType === "Bitcoin" ? (btc200wma || "") : r.unitPrice,
+            assetAmount(r)
+          ]),
+          ["Total Assets", "", "", "", sumRows(month.assets)],
           [],
           ["Liabilities"],
           ["Description", "Amount"],
@@ -825,7 +1050,7 @@
 
         const csv = rows.map(row =>
           row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-        ).join("\\n");
+        ).join("\n");
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
@@ -838,8 +1063,8 @@
         URL.revokeObjectURL(url);
       }
 
-      if (target.dataset.deleteType) {
-        deleteRow(target.dataset.deleteType, Number(target.dataset.deleteIndex));
+      if (t.dataset.deleteType) {
+        deleteRow(t.dataset.deleteType, Number(t.dataset.deleteIndex));
       }
     });
 
@@ -847,11 +1072,14 @@
       state.currency = e.target.value;
       saveState();
       render();
+      fetchBitcoin200WMA();
     });
 
     ensureMonthExists(state.selectedMonth);
+    recalcAssets(currentMonth());
     saveState();
     render();
+    fetchBitcoin200WMA();
   </script>
 </body>
 </html>

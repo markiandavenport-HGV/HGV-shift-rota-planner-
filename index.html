@@ -134,8 +134,14 @@
       font-size:20px;
       font-weight:700;
     }
-    .month-picker button{
-      background:transparent;border:0;color:#dbe3ff;font-size:30px;cursor:pointer;
+    .month-nav{
+      background:transparent;
+      border:0;
+      color:#dbe3ff;
+      font-size:30px;
+      cursor:pointer;
+      line-height:1;
+      padding:4px 6px;
     }
 
     .btn{
@@ -156,6 +162,7 @@
       font-size:13px;
       color:#fff;
       margin-right:6px;
+      margin-bottom:6px;
     }
     .btn-edit{background:#345dff}
     .btn-delete{background:#a61f3f}
@@ -168,9 +175,7 @@
       padding:12px 14px;
       font-size:16px;
     }
-    .currency-select option{
-      color:#111;
-    }
+    .currency-select option{color:#111}
 
     .stat-grid{
       display:grid;
@@ -226,9 +231,7 @@
     .cashflow-card{background:linear-gradient(135deg, rgba(31,104,255,.27), rgba(6,18,61,.88))}
     .asset-card{background:linear-gradient(135deg, rgba(154,91,9,.30), rgba(6,18,61,.88))}
 
-    .section{
-      margin-top:18px;
-    }
+    .section{margin-top:18px}
     .section-header{
       display:flex;
       justify-content:space-between;
@@ -308,6 +311,7 @@
     .pill.cash{color:#45e5b2;background:rgba(16,194,131,.12);border-color:rgba(16,194,131,.28)}
     .pill.bitcoin{color:#ffa457;background:rgba(255,129,38,.12);border-color:rgba(255,129,38,.28)}
     .pill.reits{color:#b27bff;background:rgba(157,102,255,.12);border-color:rgba(157,102,255,.28)}
+    .pill.other{color:#d6def7;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
 
     .charts{
       display:grid;
@@ -423,6 +427,7 @@
     .dot.equities{background:var(--blue)}
     .dot.cash{background:var(--teal)}
     .dot.reits{background:var(--purple)}
+    .dot.other{background:#d6def7}
     .legend-right{
       display:flex;
       gap:16px;
@@ -476,9 +481,7 @@
       cursor:pointer;
       line-height:1;
     }
-    .field{
-      margin-bottom:18px;
-    }
+    .field{margin-bottom:18px}
     .label{
       display:block;
       color:#aeb8da;
@@ -519,9 +522,7 @@
       display:grid;gap:10px;margin-top:8px;
     }
     .btn-wide{width:100%;padding:16px 18px;font-size:18px}
-    .btn-link{
-      background:transparent;color:#c4ccea
-    }
+    .btn-link{background:transparent;color:#c4ccea}
   </style>
 </head>
 <body>
@@ -555,9 +556,9 @@
 
         <div class="month-row">
           <div class="month-picker">
-            <button type="button">‹</button>
-            <div>March 2026</div>
-            <button type="button">›</button>
+            <button type="button" class="month-nav" data-month-nav="-1">‹</button>
+            <div class="month-label">March 2026</div>
+            <button type="button" class="month-nav" data-month-nav="1">›</button>
           </div>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <select id="currencySelect" class="currency-select">
@@ -602,9 +603,9 @@
 
         <div class="month-row">
           <div class="month-picker">
-            <button type="button">‹</button>
-            <div>March 2026</div>
-            <button type="button">›</button>
+            <button type="button" class="month-nav" data-month-nav="-1">‹</button>
+            <div class="month-label">March 2026</div>
+            <button type="button" class="month-nav" data-month-nav="1">›</button>
           </div>
           <button class="btn btn-green" data-open="income">+ Add</button>
         </div>
@@ -631,9 +632,9 @@
 
         <div class="month-row">
           <div class="month-picker">
-            <button type="button">‹</button>
-            <div>March 2026</div>
-            <button type="button">›</button>
+            <button type="button" class="month-nav" data-month-nav="-1">‹</button>
+            <div class="month-label">March 2026</div>
+            <button type="button" class="month-nav" data-month-nav="1">›</button>
           </div>
         </div>
 
@@ -694,9 +695,9 @@
 
         <div class="month-row">
           <div class="month-picker">
-            <button type="button">‹</button>
-            <div>March 2026</div>
-            <button type="button">›</button>
+            <button type="button" class="month-nav" data-month-nav="-1">‹</button>
+            <div class="month-label">March 2026</div>
+            <button type="button" class="month-nav" data-month-nav="1">›</button>
           </div>
           <button class="btn btn-add" data-open="asset">+ Add</button>
         </div>
@@ -731,6 +732,14 @@
         <h1>Net Worth</h1>
         <div class="subtext">Current assets minus outstanding debts</div>
 
+        <div class="month-row">
+          <div class="month-picker">
+            <button type="button" class="month-nav" data-month-nav="-1">‹</button>
+            <div class="month-label">March 2026</div>
+            <button type="button" class="month-nav" data-month-nav="1">›</button>
+          </div>
+        </div>
+
         <div class="section">
           <div class="card stat-card cashflow-card">
             <div class="stat-label">NET WORTH</div>
@@ -751,6 +760,14 @@
       <section class="page" id="page-progress">
         <h1>Progress</h1>
         <div class="subtext">6-month cash flow and asset allocation</div>
+
+        <div class="month-row">
+          <div class="month-picker">
+            <button type="button" class="month-nav" data-month-nav="-1">‹</button>
+            <div class="month-label">March 2026</div>
+            <button type="button" class="month-nav" data-month-nav="1">›</button>
+          </div>
+        </div>
 
         <div class="charts">
           <div class="chart-box">
@@ -962,61 +979,164 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "wealthos-static-data-v3";
+    const STORAGE_KEY = "wealthos-static-data-v5";
 
-    const defaultData = {
-      currency: "GBP",
-      income: [
-        { source: "Tech Corp Salary", category: "Salary", amount: 8500, recurring: true, notes: "" },
-        { source: "Freelance Design", category: "Freelance", amount: 2200, recurring: false, notes: "" },
-        { source: "Dividend Portfolio", category: "Dividends", amount: 450, recurring: true, notes: "" },
-        { source: "Rental Property", category: "Rental", amount: 1800, recurring: true, notes: "" }
-      ],
-      expenses: [
-        { name: "Apartment Rent", category: "Rent", amount: 2400, recurring: true, notes: "" },
-        { name: "Car Loan", category: "Loan Payment", amount: 580, recurring: true, notes: "" },
-        { name: "Health Insurance", category: "Insurance", amount: 350, recurring: true, notes: "" },
-        { name: "Utilities", category: "Utilities", amount: 220, recurring: true, notes: "" },
-        { name: "Subscriptions", category: "Subscriptions", amount: 95, recurring: true, notes: "" },
-        { name: "Groceries", category: "Food", amount: 650, recurring: true, notes: "" }
-      ],
-      debts: [],
-      assets: [
-        { name: "Physical Gold (10 oz)", type: "Gold", value: 60000, quantity: "10 oz", detail: "1950", notes: "" },
-        { name: "S&P 500 ETF", type: "Equities", value: 45000, quantity: "", detail: "480", notes: "" },
-        { name: "Emergency Fund", type: "Cash", value: 15000, quantity: "", detail: "—", notes: "" },
-        { name: "Bitcoin Holdings", type: "Bitcoin", value: 18000, quantity: "0.45 BTC", detail: "58000 / BTC", notes: "" }
-      ]
-    };
+    function getCurrentMonthKey() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      return y + "-" + m;
+    }
 
     function deepCopy(obj) {
       return JSON.parse(JSON.stringify(obj));
     }
 
+    function emptyMonthData() {
+      return {
+        income: [],
+        expenses: [],
+        debts: [],
+        assets: [],
+        seededFromPrevious: false
+      };
+    }
+
+    const defaultMonthKey = getCurrentMonthKey();
+
+    const defaultData = {
+      currency: "GBP",
+      selectedMonth: defaultMonthKey,
+      months: {
+        [defaultMonthKey]: {
+          income: [
+            { source: "Tech Corp Salary", category: "Salary", amount: 8500, recurring: true, notes: "" },
+            { source: "Freelance Design", category: "Freelance", amount: 2200, recurring: false, notes: "" },
+            { source: "Dividend Portfolio", category: "Dividends", amount: 450, recurring: true, notes: "" },
+            { source: "Rental Property", category: "Rental", amount: 1800, recurring: true, notes: "" }
+          ],
+          expenses: [
+            { name: "Apartment Rent", category: "Rent", amount: 2400, recurring: true, notes: "" },
+            { name: "Car Loan", category: "Loan Payment", amount: 580, recurring: true, notes: "" },
+            { name: "Health Insurance", category: "Insurance", amount: 350, recurring: true, notes: "" },
+            { name: "Utilities", category: "Utilities", amount: 220, recurring: true, notes: "" },
+            { name: "Subscriptions", category: "Subscriptions", amount: 95, recurring: true, notes: "" },
+            { name: "Groceries", category: "Food", amount: 650, recurring: true, notes: "" }
+          ],
+          debts: [],
+          assets: [
+            { name: "Physical Gold (10 oz)", type: "Gold", value: 60000, quantity: "10 oz", detail: "1950", notes: "" },
+            { name: "S&P 500 ETF", type: "Equities", value: 45000, quantity: "", detail: "480", notes: "" },
+            { name: "Emergency Fund", type: "Cash", value: 15000, quantity: "", detail: "—", notes: "" },
+            { name: "Bitcoin Holdings", type: "Bitcoin", value: 18000, quantity: "0.45 BTC", detail: "58000 / BTC", notes: "" }
+          ],
+          seededFromPrevious: false
+        }
+      }
+    };
+
+    function normalizeMonthData(obj) {
+      return {
+        income: Array.isArray(obj?.income) ? obj.income : [],
+        expenses: Array.isArray(obj?.expenses) ? obj.expenses : [],
+        debts: Array.isArray(obj?.debts) ? obj.debts : [],
+        assets: Array.isArray(obj?.assets) ? obj.assets : [],
+        seededFromPrevious: !!obj?.seededFromPrevious
+      };
+    }
+
+    function migrateOldData(raw) {
+      const currentMonth = getCurrentMonthKey();
+      const base = {
+        currency: raw.currency || "GBP",
+        selectedMonth: raw.selectedMonth || currentMonth,
+        months: {}
+      };
+
+      if (raw.months && typeof raw.months === "object") {
+        for (const key in raw.months) {
+          base.months[key] = normalizeMonthData(raw.months[key]);
+        }
+      } else {
+        base.months[currentMonth] = {
+          income: Array.isArray(raw.income) ? raw.income : [],
+          expenses: Array.isArray(raw.expenses) ? raw.expenses : [],
+          debts: Array.isArray(raw.debts) ? raw.debts : [],
+          assets: Array.isArray(raw.assets) ? raw.assets : [],
+          seededFromPrevious: false
+        };
+      }
+
+      if (!base.months[base.selectedMonth]) {
+        base.months[base.selectedMonth] = emptyMonthData();
+      }
+
+      return base;
+    }
+
     function loadData() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
-          return deepCopy(defaultData);
-        }
-        const loaded = JSON.parse(raw);
-        if (!loaded.currency) loaded.currency = "GBP";
-        if (!Array.isArray(loaded.income)) loaded.income = [];
-        if (!Array.isArray(loaded.expenses)) loaded.expenses = [];
-        if (!Array.isArray(loaded.debts)) loaded.debts = [];
-        if (!Array.isArray(loaded.assets)) loaded.assets = [];
-        return loaded;
+        if (!raw) return deepCopy(defaultData);
+        return migrateOldData(JSON.parse(raw));
       } catch (e) {
         return deepCopy(defaultData);
       }
     }
 
+    let state = loadData();
+
     function saveData() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
-    let state = loadData();
+    function shiftMonth(monthKey, delta) {
+      const [year, month] = monthKey.split("-").map(Number);
+      const d = new Date(year, month - 1 + delta, 1);
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    }
+
+    function formatMonthLabel(monthKey) {
+      const [year, month] = monthKey.split("-").map(Number);
+      const d = new Date(year, month - 1, 1);
+      return d.toLocaleDateString("en-GB", {
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function seedMonthFromPrevious(monthKey) {
+      if (state.months[monthKey]) return;
+
+      const previousMonthKey = shiftMonth(monthKey, -1);
+      const previousMonth = state.months[previousMonthKey];
+
+      if (!previousMonth) {
+        state.months[monthKey] = emptyMonthData();
+        return;
+      }
+
+      state.months[monthKey] = {
+        income: previousMonth.income.filter(item => item.recurring).map(item => deepCopy(item)),
+        expenses: previousMonth.expenses.filter(item => item.recurring).map(item => deepCopy(item)),
+        debts: previousMonth.debts.map(item => deepCopy(item)),
+        assets: previousMonth.assets.map(item => deepCopy(item)),
+        seededFromPrevious: true
+      };
+    }
+
+    function ensureSelectedMonth() {
+      if (!state.selectedMonth) state.selectedMonth = getCurrentMonthKey();
+      if (!state.months) state.months = {};
+      if (!state.months[state.selectedMonth]) {
+        seedMonthFromPrevious(state.selectedMonth);
+      }
+    }
+
+    function currentData() {
+      ensureSelectedMonth();
+      return state.months[state.selectedMonth];
+    }
 
     function getCurrencySymbol() {
       return state.currency === "GBP" ? "£" : "$";
@@ -1060,22 +1180,36 @@
       document.getElementById(titleId).textContent = addTitle;
     }
 
+    function changeMonth(delta) {
+      state.selectedMonth = shiftMonth(state.selectedMonth, delta);
+      ensureSelectedMonth();
+      saveData();
+      render();
+    }
+
     function render() {
-      const totalIncome = sum(state.income, "amount");
-      const totalExpenses = sum(state.expenses, "amount");
-      const totalDebts = sum(state.debts, "balance");
+      ensureSelectedMonth();
+      const data = currentData();
+
+      const totalIncome = sum(data.income, "amount");
+      const totalExpenses = sum(data.expenses, "amount");
+      const totalDebts = sum(data.debts, "balance");
       const totalLiabilities = totalExpenses + totalDebts;
-      const totalAssets = sum(state.assets, "value");
+      const totalAssets = sum(data.assets, "value");
       const netCashFlow = totalIncome - totalExpenses;
       const netWorth = totalAssets - totalDebts;
 
       document.getElementById("currencySelect").value = state.currency;
       document.getElementById("netWorthIcon").textContent = getCurrencySymbol();
+      document.querySelectorAll(".month-label").forEach(el => {
+        el.textContent = formatMonthLabel(state.selectedMonth);
+      });
 
+      const symbol = getCurrencySymbol();
       document.getElementById("totalIncome").textContent = fmtMoney(totalIncome);
       document.getElementById("totalLiabilities").textContent = fmtMoney(totalLiabilities);
       document.getElementById("totalAssets").textContent = fmtMoney(totalAssets);
-      document.getElementById("netCashflow").textContent = (netCashFlow >= 0 ? "+" : "") + fmtMoney(Math.abs(netCashFlow));
+      document.getElementById("netCashflow").textContent = (netCashFlow >= 0 ? "+" : "-") + symbol + Math.abs(netCashFlow).toLocaleString();
       document.getElementById("cashflowNote").textContent = netCashFlow >= 0 ? "Positive cash flow" : "Negative cash flow";
       document.getElementById("incomePageTotal").textContent = fmtMoney(totalIncome);
       document.getElementById("assetPageTotal").textContent = fmtMoney(totalAssets);
@@ -1087,17 +1221,18 @@
       renderDebtTable();
       renderAssetTable();
       renderLegends();
-      renderCashflowChart(totalIncome, totalExpenses);
-      renderNetWorthTrend(netWorth);
+      renderCashflowChart();
+      renderNetWorthTrend();
     }
 
     function renderIncomeTable() {
+      const data = currentData();
       const tbody = document.getElementById("incomeTable");
-      if (!state.income.length) {
-        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No income added yet.</div></td></tr>';
+      if (!data.income.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No income added for this month.</div></td></tr>';
         return;
       }
-      tbody.innerHTML = state.income.map((item, index) => `
+      tbody.innerHTML = data.income.map((item, index) => `
         <tr>
           <td>${escapeHtml(item.source)}</td>
           <td><span class="pill ${categoryClass(item.category)}">${escapeHtml(item.category)}</span></td>
@@ -1112,12 +1247,13 @@
     }
 
     function renderExpenseTable() {
+      const data = currentData();
       const tbody = document.getElementById("expenseTable");
-      if (!state.expenses.length) {
-        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No expenses added yet.</div></td></tr>';
+      if (!data.expenses.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No expenses added for this month.</div></td></tr>';
         return;
       }
-      tbody.innerHTML = state.expenses.map((item, index) => `
+      tbody.innerHTML = data.expenses.map((item, index) => `
         <tr>
           <td>${escapeHtml(item.name)}</td>
           <td><span class="pill ${categoryClass(item.category)}">${escapeHtml(item.category)}</span></td>
@@ -1132,12 +1268,13 @@
     }
 
     function renderDebtTable() {
+      const data = currentData();
       const tbody = document.getElementById("debtTable");
-      if (!state.debts.length) {
-        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No debts added yet.</div></td></tr>';
+      if (!data.debts.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No debts added for this month.</div></td></tr>';
         return;
       }
-      tbody.innerHTML = state.debts.map((item, index) => `
+      tbody.innerHTML = data.debts.map((item, index) => `
         <tr>
           <td>${escapeHtml(item.name)}</td>
           <td>${escapeHtml(item.category)}</td>
@@ -1152,12 +1289,13 @@
     }
 
     function renderAssetTable() {
+      const data = currentData();
       const tbody = document.getElementById("assetTable");
-      if (!state.assets.length) {
-        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No assets added yet.</div></td></tr>';
+      if (!data.assets.length) {
+        tbody.innerHTML = '<tr><td colspan="5"><div class="empty">No assets added for this month.</div></td></tr>';
         return;
       }
-      tbody.innerHTML = state.assets.map((item, index) => `
+      tbody.innerHTML = data.assets.map((item, index) => `
         <tr>
           <td>${escapeHtml(item.name)}</td>
           <td><span class="pill ${categoryClass(item.type)}">${escapeHtml(item.type)}</span></td>
@@ -1172,8 +1310,9 @@
     }
 
     function renderLegends() {
+      const data = currentData();
       const totals = {};
-      state.assets.forEach(a => {
+      data.assets.forEach(a => {
         const key = a.type || "Other";
         totals[key] = (totals[key] || 0) + Number(a.value || 0);
       });
@@ -1199,32 +1338,45 @@
       document.getElementById("progressLegend").innerHTML = rows;
     }
 
-    function renderCashflowChart(incomeTotal, expenseTotal) {
+    function getRecentMonthKeys(count, endMonthKey) {
+      const keys = [];
+      for (let i = count - 1; i >= 0; i--) {
+        keys.push(shiftMonth(endMonthKey, -i));
+      }
+      return keys;
+    }
+
+    function renderCashflowChart() {
       const el = document.getElementById("cashflowChart");
-      const months = ["Oct","Nov","Dec","Jan","Feb","Mar"];
-      const incomeSeries = [0,0,0,incomeTotal * 0.84, incomeTotal * 0.96, incomeTotal];
-      const expenseSeries = [0,0,0,0,expenseTotal * 0.92, expenseTotal];
+      const months = getRecentMonthKeys(6, state.selectedMonth);
+      const incomeSeries = months.map(key => sum((state.months[key] || emptyMonthData()).income, "amount"));
+      const expenseSeries = months.map(key => sum((state.months[key] || emptyMonthData()).expenses, "amount"));
       const maxVal = Math.max(...incomeSeries, ...expenseSeries, 1);
 
-      el.innerHTML = months.map((m, i) => `
+      el.innerHTML = months.map((key, i) => `
         <div class="bar-group">
           <div class="bar income" style="height:${(incomeSeries[i] / maxVal) * 100}%"></div>
           <div class="bar liability" style="height:${(expenseSeries[i] / maxVal) * 100}%"></div>
-          <div class="bar-label">${m}</div>
+          <div class="bar-label">${formatMonthLabel(key).slice(0,3)}</div>
         </div>
       `).join("");
     }
 
-    function renderNetWorthTrend(netWorth) {
+    function renderNetWorthTrend() {
       const el = document.getElementById("netWorthTrend");
-      const months = ["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"];
-      const series = months.map((_, i) => Math.max(0, netWorth * ((i + 1) / months.length) * 0.92 + (i * 250)));
+      const months = getRecentMonthKeys(12, state.selectedMonth);
+      const series = months.map(key => {
+        const month = state.months[key] || emptyMonthData();
+        const assets = sum(month.assets, "value");
+        const debts = sum(month.debts, "balance");
+        return Math.max(0, assets - debts);
+      });
       const maxVal = Math.max(...series, 1);
 
-      el.innerHTML = months.map((m, i) => `
+      el.innerHTML = months.map((key, i) => `
         <div class="bar-group">
           <div class="bar income" style="height:${(series[i] / maxVal) * 100}%"></div>
-          <div class="bar-label">${m}</div>
+          <div class="bar-label">${formatMonthLabel(key).slice(0,3)}</div>
         </div>
       `).join("");
     }
@@ -1242,14 +1394,16 @@
     }
 
     function downloadCSV() {
+      const data = currentData();
       const rows = [
         ["Currency", state.currency],
+        ["Month", state.selectedMonth],
         [],
         ["Type","Name","Category","Amount/Value","Recurring","Notes"],
-        ...state.income.map(i => ["Income", i.source, i.category, i.amount, i.recurring ? "Yes" : "No", i.notes || ""]),
-        ...state.expenses.map(i => ["Expense", i.name, i.category, i.amount, i.recurring ? "Yes" : "No", i.notes || ""]),
-        ...state.debts.map(i => ["Debt", i.name, i.category, i.balance, "", i.notes || ""]),
-        ...state.assets.map(i => ["Asset", i.name, i.type, i.value, "", i.notes || ""])
+        ...data.income.map(i => ["Income", i.source, i.category, i.amount, i.recurring ? "Yes" : "No", i.notes || ""]),
+        ...data.expenses.map(i => ["Expense", i.name, i.category, i.amount, i.recurring ? "Yes" : "No", i.notes || ""]),
+        ...data.debts.map(i => ["Debt", i.name, i.category, i.balance, "", i.notes || ""]),
+        ...data.assets.map(i => ["Asset", i.name, i.type, i.value, "", i.notes || ""])
       ];
 
       const csv = rows.map(row =>
@@ -1260,7 +1414,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "wealthos-export.csv";
+      a.download = "wealthos-" + state.selectedMonth + ".csv";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1268,31 +1422,31 @@
     }
 
     function deleteIncome(index) {
-      state.income.splice(index, 1);
+      currentData().income.splice(index, 1);
       saveData();
       render();
     }
 
     function deleteExpense(index) {
-      state.expenses.splice(index, 1);
+      currentData().expenses.splice(index, 1);
       saveData();
       render();
     }
 
     function deleteDebt(index) {
-      state.debts.splice(index, 1);
+      currentData().debts.splice(index, 1);
       saveData();
       render();
     }
 
     function deleteAsset(index) {
-      state.assets.splice(index, 1);
+      currentData().assets.splice(index, 1);
       saveData();
       render();
     }
 
     function editIncome(index) {
-      const item = state.income[index];
+      const item = currentData().income[index];
       const form = document.getElementById("incomeForm");
       form.editIndex.value = index;
       form.source.value = item.source || "";
@@ -1305,7 +1459,7 @@
     }
 
     function editExpense(index) {
-      const item = state.expenses[index];
+      const item = currentData().expenses[index];
       const form = document.getElementById("expenseForm");
       form.editIndex.value = index;
       form.name.value = item.name || "";
@@ -1318,7 +1472,7 @@
     }
 
     function editDebt(index) {
-      const item = state.debts[index];
+      const item = currentData().debts[index];
       const form = document.getElementById("debtForm");
       form.editIndex.value = index;
       form.name.value = item.name || "";
@@ -1330,7 +1484,7 @@
     }
 
     function editAsset(index) {
-      const item = state.assets[index];
+      const item = currentData().assets[index];
       const form = document.getElementById("assetForm");
       form.editIndex.value = index;
       form.name.value = item.name || "";
@@ -1382,6 +1536,12 @@
       });
     });
 
+    document.querySelectorAll("[data-month-nav]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        changeMonth(Number(btn.dataset.monthNav));
+      });
+    });
+
     document.getElementById("currencySelect").addEventListener("change", (e) => {
       state.currency = e.target.value;
       saveData();
@@ -1400,9 +1560,9 @@
       };
       const editIndex = fd.get("editIndex");
       if (editIndex !== "") {
-        state.income[Number(editIndex)] = entry;
+        currentData().income[Number(editIndex)] = entry;
       } else {
-        state.income.push(entry);
+        currentData().income.push(entry);
       }
       saveData();
       render();
@@ -1421,9 +1581,9 @@
       };
       const editIndex = fd.get("editIndex");
       if (editIndex !== "") {
-        state.expenses[Number(editIndex)] = entry;
+        currentData().expenses[Number(editIndex)] = entry;
       } else {
-        state.expenses.push(entry);
+        currentData().expenses.push(entry);
       }
       saveData();
       render();
@@ -1441,9 +1601,9 @@
       };
       const editIndex = fd.get("editIndex");
       if (editIndex !== "") {
-        state.debts[Number(editIndex)] = entry;
+        currentData().debts[Number(editIndex)] = entry;
       } else {
-        state.debts.push(entry);
+        currentData().debts.push(entry);
       }
       saveData();
       render();
@@ -1463,9 +1623,9 @@
       };
       const editIndex = fd.get("editIndex");
       if (editIndex !== "") {
-        state.assets[Number(editIndex)] = entry;
+        currentData().assets[Number(editIndex)] = entry;
       } else {
-        state.assets.push(entry);
+        currentData().assets.push(entry);
       }
       saveData();
       render();
@@ -1474,6 +1634,8 @@
 
     document.getElementById("exportBtn").addEventListener("click", downloadCSV);
 
+    ensureSelectedMonth();
+    saveData();
     render();
   </script>
 </body>

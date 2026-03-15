@@ -12,7 +12,6 @@
       --muted:#5a5a5a;
       --panel:#ffffff;
       --soft:#ecece7;
-      --warn:#8a5a00;
     }
 
     *{box-sizing:border-box}
@@ -28,7 +27,7 @@
     body{min-height:100vh}
 
     .app{
-      max-width:1180px;
+      max-width:1120px;
       margin:0 auto;
       padding:18px 14px 28px;
     }
@@ -116,7 +115,7 @@
 
     .income-layout{
       display:grid;
-      grid-template-columns:1fr 360px;
+      grid-template-columns:1fr 340px;
       gap:16px;
       margin-bottom:16px;
     }
@@ -138,6 +137,35 @@
 
     .box-body{
       padding:0;
+    }
+
+    .mini-field-wrap{
+      padding:10px 12px 12px;
+      border-top:1px solid #8a8a8a;
+    }
+
+    .mini-field-label{
+      display:block;
+      font-family:Arial, Helvetica, sans-serif;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      color:#444;
+      margin-bottom:6px;
+      font-weight:700;
+    }
+
+    .mini-field{
+      width:100%;
+      border:0;
+      border-bottom:1px solid #777;
+      background:transparent;
+      padding:4px 2px;
+      font-size:13px;
+      color:#111;
+      outline:none;
+      font-family:Arial, Helvetica, sans-serif;
+      text-align:right;
     }
 
     table{
@@ -164,8 +192,7 @@
       white-space:nowrap;
     }
 
-    td input,
-    td select{
+    td input{
       width:100%;
       border:0;
       border-bottom:1px solid #777;
@@ -175,7 +202,6 @@
       color:#111;
       outline:none;
       font-family:Arial, Helvetica, sans-serif;
-      border-radius:0;
     }
 
     td input[type="number"]{
@@ -183,19 +209,10 @@
       min-width:72px;
     }
 
-    td select{
-      padding-left:0;
-    }
-
     .readonly-cell{
       font-family:Arial, Helvetica, sans-serif;
       text-align:right;
       white-space:nowrap;
-    }
-
-    .readonly-cell.warn{
-      color:var(--warn);
-      font-size:11px;
     }
 
     .actions{
@@ -499,22 +516,27 @@
               <thead>
                 <tr>
                   <th>Description</th>
-                  <th style="width:110px;">Type</th>
-                  <th style="width:90px;">Qty</th>
-                  <th style="width:110px;">Price</th>
-                  <th style="width:110px;">Total</th>
+                  <th style="width:110px;">Qty</th>
+                  <th style="width:120px;">Price</th>
+                  <th style="width:120px;">Total</th>
                   <th style="width:74px;"></th>
                 </tr>
               </thead>
               <tbody id="assetTable"></tbody>
               <tfoot>
                 <tr class="total-row">
-                  <td colspan="4">Total Assets</td>
+                  <td colspan="3">Total Assets</td>
                   <td class="total-value" id="assetTotalRow">£0</td>
                   <td></td>
                 </tr>
               </tfoot>
             </table>
+
+            <div class="mini-field-wrap">
+              <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
+              <input class="mini-field" id="btc200wmaInput" type="number" step="0.01" placeholder="Enter value">
+            </div>
+
             <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
           </div>
         </div>
@@ -554,9 +576,7 @@
   </div>
 
   <script>
-    const STORAGE_KEY = "kyosaki-financial-statement-v4";
-    let btc200wma = null;
-    let btcFetchError = false;
+    const STORAGE_KEY = "kyosaki-financial-statement-v5";
 
     function monthKeyFromDate(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -592,7 +612,6 @@
       return {
         id: uid("ast"),
         description: "",
-        assetType: "Cash",
         quantity: "",
         unitPrice: "",
         amount: 0
@@ -602,6 +621,7 @@
     const defaultData = {
       currency: "GBP",
       selectedMonth: currentMonthKey(),
+      btc200wma: "",
       months: {
         [currentMonthKey()]: {
           income: [
@@ -616,10 +636,10 @@
             { id: uid("exp"), description: "Other Expenses", amount: 300 }
           ],
           assets: [
-            { id: uid("ast"), description: "Savings", assetType: "Cash", quantity: 1, unitPrice: 8000, amount: 8000 },
-            { id: uid("ast"), description: "Stocks / Funds / CDs", assetType: "Equity", quantity: 1, unitPrice: 4500, amount: 4500 },
-            { id: uid("ast"), description: "Real Estate / Business", assetType: "Real Estate", quantity: 1, unitPrice: 15000, amount: 15000 },
-            { id: uid("ast"), description: "Bitcoin", assetType: "Bitcoin", quantity: 0.25, unitPrice: "", amount: 0 }
+            { id: uid("ast"), description: "Savings", quantity: 1, unitPrice: 8000, amount: 8000 },
+            { id: uid("ast"), description: "Stocks / Funds / CDs", quantity: 1, unitPrice: 4500, amount: 4500 },
+            { id: uid("ast"), description: "Real Estate / Business", quantity: 1, unitPrice: 15000, amount: 15000 },
+            { id: uid("ast"), description: "Bitcoin", quantity: 0.25, unitPrice: "", amount: 0 }
           ],
           liabilities: [
             { id: uid("lia"), description: "Home Mortgage", amount: 6500 },
@@ -650,28 +670,12 @@
 
     function normalizeAssetRow(row) {
       if (!row) return blankAssetRow();
-
-      const hasNewShape = "assetType" in row || "quantity" in row || "unitPrice" in row;
-
-      if (hasNewShape) {
-        return {
-          id: row.id || uid("ast"),
-          description: typeof row.description === "string" ? row.description : "",
-          assetType: row.assetType || "Cash",
-          quantity: row.quantity === "" || row.quantity === null || row.quantity === undefined ? "" : safeNumber(row.quantity),
-          unitPrice: row.unitPrice === "" || row.unitPrice === null || row.unitPrice === undefined ? "" : safeNumber(row.unitPrice),
-          amount: row.amount !== undefined ? safeNumber(row.amount) : 0
-        };
-      }
-
-      const oldAmount = safeNumber(row.amount);
       return {
         id: row.id || uid("ast"),
         description: typeof row.description === "string" ? row.description : "",
-        assetType: "Cash",
-        quantity: oldAmount ? 1 : "",
-        unitPrice: oldAmount ? oldAmount : "",
-        amount: oldAmount
+        quantity: row.quantity === "" || row.quantity === null || row.quantity === undefined ? "" : safeNumber(row.quantity),
+        unitPrice: row.unitPrice === "" || row.unitPrice === null || row.unitPrice === undefined ? "" : safeNumber(row.unitPrice),
+        amount: row.amount !== undefined ? safeNumber(row.amount) : 0
       };
     }
 
@@ -692,6 +696,7 @@
         const state = {
           currency: parsed.currency || "GBP",
           selectedMonth: parsed.selectedMonth || currentMonthKey(),
+          btc200wma: parsed.btc200wma === undefined ? "" : parsed.btc200wma,
           months: {}
         };
         if (parsed.months && typeof parsed.months === "object") {
@@ -769,14 +774,15 @@
         .replace(/'/g, "&#039;");
     }
 
+    function isBitcoinRow(row) {
+      return String(row.description || "").toLowerCase().includes("bitcoin");
+    }
+
     function assetAmount(row) {
       const qty = safeNumber(row.quantity);
-      const type = row.assetType || "Cash";
-
-      if (type === "Bitcoin") {
-        return btc200wma ? qty * btc200wma : 0;
+      if (isBitcoinRow(row)) {
+        return qty * safeNumber(state.btc200wma);
       }
-
       return qty * safeNumber(row.unitPrice);
     }
 
@@ -804,44 +810,21 @@
     function renderAssetTable(rows) {
       const tbody = document.getElementById("assetTable");
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">No rows yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No rows yet.</td></tr>';
         return;
       }
 
       tbody.innerHTML = rows.map((row, index) => {
-        const type = row.assetType || "Cash";
-        const isBitcoin = type === "Bitcoin";
         const qtyValue = row.quantity === "" ? "" : row.quantity;
         const priceValue = row.unitPrice === "" ? "" : row.unitPrice;
         const total = assetAmount(row);
-
-        let priceCell = "";
-        if (isBitcoin) {
-          if (btc200wma) {
-            priceCell = `<div class="readonly-cell">${fmtPrice(btc200wma)}</div>`;
-          } else if (btcFetchError) {
-            priceCell = `<div class="readonly-cell warn">Unavailable</div>`;
-          } else {
-            priceCell = `<div class="readonly-cell">Loading…</div>`;
-          }
-        } else {
-          priceCell = `<input type="number" step="0.01" value="${priceValue}" data-type="assets" data-index="${index}" data-field="unitPrice">`;
-        }
+        const bitcoin = isBitcoinRow(row);
 
         return `
           <tr>
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
-            <td>
-              <select data-type="assets" data-index="${index}" data-field="assetType">
-                <option value="Real Estate" ${type === "Real Estate" ? "selected" : ""}>Real Estate</option>
-                <option value="Gold" ${type === "Gold" ? "selected" : ""}>Gold</option>
-                <option value="Bitcoin" ${type === "Bitcoin" ? "selected" : ""}>Bitcoin</option>
-                <option value="Equity" ${type === "Equity" ? "selected" : ""}>Equity</option>
-                <option value="Cash" ${type === "Cash" ? "selected" : ""}>Cash</option>
-              </select>
-            </td>
             <td><input type="number" step="0.00000001" value="${qtyValue}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td>${priceCell}</td>
+            <td>${bitcoin ? `<div class="readonly-cell">${state.btc200wma ? fmtPrice(state.btc200wma) : ""}</div>` : `<input type="number" step="0.01" value="${priceValue}" data-type="assets" data-index="${index}" data-field="unitPrice">`}</td>
             <td class="readonly-cell">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -883,6 +866,7 @@
       document.getElementById("expenseTotalRow").textContent = fmtMoney(totalExpenses);
       document.getElementById("assetTotalRow").textContent = fmtMoney(totalAssets);
       document.getElementById("liabilityTotalRow").textContent = fmtMoney(totalLiabilities);
+      document.getElementById("btc200wmaInput").value = state.btc200wma === "" ? "" : state.btc200wma;
     }
 
     function render() {
@@ -920,12 +904,7 @@
       if (!row) return;
 
       if (type === "assets") {
-        if (field === "assetType") {
-          row.assetType = value;
-          if (value === "Bitcoin") {
-            row.unitPrice = "";
-          }
-        } else if (field === "quantity") {
+        if (field === "quantity") {
           row.quantity = value === "" ? "" : safeNumber(value);
         } else if (field === "unitPrice") {
           row.unitPrice = value === "" ? "" : safeNumber(value);
@@ -941,46 +920,9 @@
       render();
     }
 
-    async function fetchBitcoin200WMA() {
-      btcFetchError = false;
-
-      try {
-        const vsCurrency = state.currency === "GBP" ? "gbp" : "usd";
-        const url = `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=${vsCurrency}&days=1460&interval=daily`;
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok) throw new Error("BTC fetch failed");
-        const data = await response.json();
-        const prices = Array.isArray(data.prices) ? data.prices : [];
-
-        const weekly = [];
-        for (let i = prices.length - 1; i >= 0 && weekly.length < 200; i -= 7) {
-          if (prices[i] && Number.isFinite(Number(prices[i][1]))) {
-            weekly.unshift(Number(prices[i][1]));
-          }
-        }
-
-        if (!weekly.length) throw new Error("No BTC data");
-
-        btc200wma = weekly.reduce((a, b) => a + b, 0) / weekly.length;
-        btcFetchError = false;
-      } catch (err) {
-        btc200wma = null;
-        btcFetchError = true;
-      }
-
-      saveState();
-      render();
-    }
-
     document.addEventListener("input", function(e){
       const t = e.target;
       if (!t.matches("input[data-type]")) return;
-      updateField(t.dataset.type, Number(t.dataset.index), t.dataset.field, t.value);
-    });
-
-    document.addEventListener("change", function(e){
-      const t = e.target;
-      if (!t.matches("select[data-type]")) return;
       updateField(t.dataset.type, Number(t.dataset.index), t.dataset.field, t.value);
     });
 
@@ -1013,6 +955,7 @@
         const rows = [
           ["Month", state.selectedMonth],
           ["Currency", state.currency],
+          ["Bitcoin 200 Week Moving Average", state.btc200wma],
           [],
           ["Income Statement"],
           ["Income"],
@@ -1030,15 +973,14 @@
           [],
           ["Balance Sheet"],
           ["Assets"],
-          ["Description", "Type", "Quantity", "Price", "Total"],
+          ["Description", "Quantity", "Price", "Total"],
           ...month.assets.map(r => [
             r.description,
-            r.assetType,
             r.quantity,
-            r.assetType === "Bitcoin" ? (btc200wma || "") : r.unitPrice,
+            isBitcoinRow(r) ? state.btc200wma : r.unitPrice,
             assetAmount(r)
           ]),
-          ["Total Assets", "", "", "", sumRows(month.assets)],
+          ["Total Assets", "", "", sumRows(month.assets)],
           [],
           ["Liabilities"],
           ["Description", "Amount"],
@@ -1072,14 +1014,18 @@
       state.currency = e.target.value;
       saveState();
       render();
-      fetchBitcoin200WMA();
+    });
+
+    document.getElementById("btc200wmaInput").addEventListener("input", function(e){
+      state.btc200wma = e.target.value === "" ? "" : safeNumber(e.target.value);
+      saveState();
+      render();
     });
 
     ensureMonthExists(state.selectedMonth);
     recalcAssets(currentMonth());
     saveState();
     render();
-    fetchBitcoin200WMA();
   </script>
 </body>
 </html>

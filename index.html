@@ -954,60 +954,7 @@
       }
 
       if (t.id === "exportBtn") {
-        const month = currentMonth();
-        recalcAssets(month);
-
-        const rows = [
-          ["Month", state.selectedMonth],
-          ["Currency", state.currency],
-          ["Bitcoin 200 Week Moving Average", state.btc200wma],
-          [],
-          ["Income Statement"],
-          ["Income"],
-          ["Description", "Amount"],
-          ...month.income.map(r => [r.description, r.amount]),
-          ["Total Income", sumRows(month.income)],
-          [],
-          ["Expenses"],
-          ["Description", "Amount"],
-          ...month.expenses.map(r => [r.description, r.amount]),
-          ["Total Expenses", sumRows(month.expenses)],
-          [],
-          ["Passive Income", sumPassiveIncome(month.income)],
-          ["Monthly Cash Flow", sumRows(month.income) - sumRows(month.expenses)],
-          [],
-          ["Balance Sheet"],
-          ["Assets"],
-          ["Description", "Quantity", "Price", "Total"],
-          ...month.assets.map(r => [
-            r.description,
-            r.quantity,
-            isBitcoinRow(r) ? state.btc200wma : r.unitPrice,
-            assetAmount(r)
-          ]),
-          ["Total Assets", "", "", sumRows(month.assets)],
-          [],
-          ["Liabilities"],
-          ["Description", "Amount"],
-          ...month.liabilities.map(r => [r.description, r.amount]),
-          ["Total Liabilities", sumRows(month.liabilities)],
-          [],
-          ["Net Worth", sumRows(month.assets) - sumRows(month.liabilities)]
-        ];
-
-        const csv = rows.map(row =>
-          row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-        ).join("\n");
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "financial-statement-" + state.selectedMonth + ".csv";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        alert("Preview only.");
       }
 
       if (t.dataset.deleteType) {
@@ -1034,3 +981,7 @@
   </script>
 </body>
 </html>
+"""
+path = Path("/mnt/data/financial_statement_centered_preview.html")
+path.write_text(html, encoding="utf-8")
+print(path.as_posix()) 乐盈 to=python_user_visible.exec code

@@ -190,7 +190,6 @@
       width:100%;
       border-collapse:collapse;
       border-spacing:0;
-      table-layout:fixed;
     }
 
     th,td{
@@ -383,11 +382,29 @@
       font-size:12px;
     }
 
-    .asset-desc-col{width:auto}
-    .asset-qty-col{width:72px}
-    .asset-price-col{width:110px}
-    .asset-total-col{width:120px}
-    .asset-action-col{width:74px}
+    .asset-table{
+      table-layout:auto;
+    }
+
+    .asset-desc-col{
+      width:auto;
+    }
+
+    .asset-qty-col{
+      width:54px;
+    }
+
+    .asset-price-col{
+      width:92px;
+    }
+
+    .asset-total-col{
+      width:110px;
+    }
+
+    .asset-action-col{
+      width:64px;
+    }
 
     @media (max-width:1020px){
       .income-layout,
@@ -427,10 +444,21 @@
         font-size:18px;
       }
 
-      .asset-qty-col{width:62px}
-      .asset-price-col{width:96px}
-      .asset-total-col{width:100px}
-      .asset-action-col{width:64px}
+      .asset-qty-col{
+        width:48px;
+      }
+
+      .asset-price-col{
+        width:84px;
+      }
+
+      .asset-total-col{
+        width:92px;
+      }
+
+      .asset-action-col{
+        width:58px;
+      }
     }
   </style>
 </head>
@@ -542,7 +570,7 @@
         <div class="box">
           <div class="box-title">Assets</div>
           <div class="box-body">
-            <table>
+            <table class="asset-table">
               <thead>
                 <tr>
                   <th class="asset-desc-col">Description</th>
@@ -776,11 +804,12 @@
       ).format(Number(n || 0));
     }
 
-    function fmtPrice(n) {
-      return new Intl.NumberFormat(
-        state.currency === "GBP" ? "en-GB" : "en-US",
-        { style: "currency", currency: state.currency, maximumFractionDigits: 2 }
-      ).format(Number(n || 0));
+    function assetAmount(row) {
+      const qty = safeNumber(row.quantity);
+      if (isBitcoinRow(row)) {
+        return qty * safeNumber(state.btc200wma);
+      }
+      return qty * safeNumber(row.unitPrice);
     }
 
     function sumRows(rows) {
@@ -806,14 +835,6 @@
 
     function isBitcoinRow(row) {
       return String(row.description || "").toLowerCase().includes("bitcoin");
-    }
-
-    function assetAmount(row) {
-      const qty = safeNumber(row.quantity);
-      if (isBitcoinRow(row)) {
-        return qty * safeNumber(state.btc200wma);
-      }
-      return qty * safeNumber(row.unitPrice);
     }
 
     function recalcAssets(month) {
@@ -1079,7 +1100,7 @@
 
         const csv = rows.map(row =>
           row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-        ).join("\n");
+        ).join("\\n");
 
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);

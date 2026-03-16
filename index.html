@@ -123,10 +123,15 @@
 
     .balance-layout{
       display:grid;
-      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      grid-template-columns:1fr 1fr;
       gap:16px;
-      margin-bottom:10px;
+      margin:0 auto 10px;
       align-items:start;
+    }
+
+    .balance-layout > .box{
+      width:100%;
+      justify-self:stretch;
     }
 
     .box{
@@ -176,12 +181,16 @@
       outline:none;
       font-family:Arial, Helvetica, sans-serif;
       text-align:right;
+      border-radius:0;
+      -webkit-appearance:none;
+      appearance:none;
     }
 
     table{
       width:100%;
       border-collapse:collapse;
       border-spacing:0;
+      table-layout:fixed;
     }
 
     th,td{
@@ -219,7 +228,7 @@
 
     td input[type="number"]{
       text-align:right;
-      min-width:72px;
+      min-width:0;
     }
 
     td input[readonly]{
@@ -374,6 +383,12 @@
       font-size:12px;
     }
 
+    .asset-desc-col{width:auto}
+    .asset-qty-col{width:72px}
+    .asset-price-col{width:110px}
+    .asset-total-col{width:120px}
+    .asset-action-col{width:74px}
+
     @media (max-width:1020px){
       .income-layout,
       .balance-layout{
@@ -411,6 +426,11 @@
       .footer-value{
         font-size:18px;
       }
+
+      .asset-qty-col{width:62px}
+      .asset-price-col{width:96px}
+      .asset-total-col{width:100px}
+      .asset-action-col{width:64px}
     }
   </style>
 </head>
@@ -525,11 +545,11 @@
             <table>
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th style="width:110px;">Qty</th>
-                  <th style="width:120px;">Price</th>
-                  <th style="width:120px;">Total</th>
-                  <th style="width:74px;"></th>
+                  <th class="asset-desc-col">Description</th>
+                  <th class="asset-qty-col">Qty</th>
+                  <th class="asset-price-col">Price</th>
+                  <th class="asset-total-col">Total</th>
+                  <th class="asset-action-col"></th>
                 </tr>
               </thead>
               <tbody id="assetTable"></tbody>
@@ -1022,41 +1042,39 @@
         recalcAssets(month);
 
         const rows = [
-          ["Month", state.selectedMonth],
-          ["Currency", state.currency],
-          ["Bitcoin 200 Week Moving Average", state.btc200wma],
+          ["MONTH", state.selectedMonth],
+          ["CURRENCY", state.currency],
+          ["BITCOIN 200 WEEK MOVING AVERAGE", state.btc200wma],
           [],
-          ["Income Statement"],
-          ["Income"],
-          ["Description", "Amount"],
+          ["INCOME"],
+          ["DESCRIPTION", "AMOUNT"],
           ...month.income.map(r => [r.description, r.amount]),
-          ["Total Income", sumRows(month.income)],
+          ["TOTAL INCOME", sumRows(month.income)],
           [],
-          ["Expenses"],
-          ["Description", "Amount"],
+          ["EXPENSES"],
+          ["DESCRIPTION", "AMOUNT"],
           ...month.expenses.map(r => [r.description, r.amount]),
-          ["Total Expenses", sumRows(month.expenses)],
+          ["TOTAL EXPENSES", sumRows(month.expenses)],
           [],
-          ["Passive Income", sumPassiveIncome(month.income)],
-          ["Monthly Cash Flow", sumRows(month.income) - sumRows(month.expenses)],
+          ["PASSIVE INCOME", sumPassiveIncome(month.income)],
+          ["MONTHLY CASH FLOW", sumRows(month.income) - sumRows(month.expenses)],
           [],
-          ["Balance Sheet"],
-          ["Assets"],
-          ["Description", "Quantity", "Price", "Total"],
+          ["ASSETS"],
+          ["DESCRIPTION", "QUANTITY", "PRICE", "TOTAL"],
           ...month.assets.map(r => [
             r.description,
             r.quantity,
             isBitcoinRow(r) ? state.btc200wma : r.unitPrice,
             assetAmount(r)
           ]),
-          ["Total Assets", "", "", sumRows(month.assets)],
+          ["TOTAL ASSETS", "", "", sumRows(month.assets)],
           [],
-          ["Liabilities"],
-          ["Description", "Amount"],
+          ["LIABILITIES"],
+          ["DESCRIPTION", "AMOUNT"],
           ...month.liabilities.map(r => [r.description, r.amount]),
-          ["Total Liabilities", sumRows(month.liabilities)],
+          ["TOTAL LIABILITIES", sumRows(month.liabilities)],
           [],
-          ["Net Worth", sumRows(month.assets) - sumRows(month.liabilities)]
+          ["NET WORTH", sumRows(month.assets) - sumRows(month.liabilities)]
         ];
 
         const csv = rows.map(row =>

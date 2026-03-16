@@ -212,11 +212,18 @@
       color:#111;
       outline:none;
       font-family:Arial, Helvetica, sans-serif;
+      border-radius:0;
+      -webkit-appearance:none;
+      appearance:none;
     }
 
     td input[type="number"]{
       text-align:right;
       min-width:72px;
+    }
+
+    td input[readonly]{
+      color:#555;
     }
 
     .readonly-cell{
@@ -803,7 +810,7 @@
       }
 
       tbody.innerHTML = rows.map((row, index) => `
-        <tr>
+        <tr data-row-type="${type}" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
           <td><input type="number" step="0.01" value="${row.amount === 0 ? "" : row.amount}" data-type="${type}" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
@@ -825,11 +832,21 @@
         const bitcoin = isBitcoinRow(row);
 
         return `
-          <tr>
+          <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
             <td><input type="number" step="0.00000001" value="${qtyValue}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td>${bitcoin ? `<div class="readonly-cell">${state.btc200wma ? fmtPrice(state.btc200wma) : ""}</div>` : `<input type="number" step="0.01" value="${priceValue}" data-type="assets" data-index="${index}" data-field="unitPrice">`}</td>
-            <td class="readonly-cell">${fmtMoney(total)}</td>
+            <td>
+              <input
+                type="number"
+                step="0.01"
+                value="${bitcoin ? (state.btc200wma === "" ? "" : state.btc200wma) : priceValue}"
+                data-type="assets"
+                data-index="${index}"
+                data-field="unitPrice"
+                ${bitcoin ? "readonly" : ""}
+              >
+            </td>
+            <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
         `;
@@ -844,12 +861,40 @@
       }
 
       tbody.innerHTML = rows.map((row, index) => `
-        <tr>
+        <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
           <td><input type="number" step="0.01" value="${row.amount === 0 ? "" : row.amount}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
+    }
+
+    function updateAssetRowUI(index) {
+      const row = currentMonth().assets[index];
+      const tr = document.querySelector(`tr[data-row-type="assets"][data-row-index="${index}"]`);
+      if (!row || !tr) return;
+
+      const priceInput = tr.querySelector('input[data-field="unitPrice"]');
+      const totalCell = tr.querySelector(`[data-asset-total="${index}"]`);
+      const bitcoin = isBitcoinRow(row);
+
+      if (priceInput) {
+        if (bitcoin) {
+          priceInput.readOnly = true;
+          priceInput.value = state.btc200wma === "" ? "" : state.btc200wma;
+        } else {
+          priceInput.readOnly = false;
+          priceInput.value = row.unitPrice === "" ? "" : row.unitPrice;
+        }
+      }
+
+      if (totalCell) {
+        totalCell.textContent = fmtMoney(assetAmount(row));
+      }
+    }
+
+    function updateAllAssetRowUI() {
+      currentMonth().assets.forEach((_, index) => updateAssetRowUI(index));
     }
 
     function renderTotals() {
@@ -904,7 +949,7 @@
       render();
     }
 
-    function updateField(type, index, field, value) {
+    function updateFieldWithoutRerender(type, index, field, value) {
       const row = currentMonth()[type][index];
       if (!row) return;
 
@@ -912,23 +957,42 @@
         if (field === "quantity") {
           row.quantity = value === "" ? "" : safeNumber(value);
         } else if (field === "unitPrice") {
-          row.unitPrice = value === "" ? "" : safeNumber(value);
+          if (!isBitcoinRow(row)) {
+            row.unitPrice = value === "" ? "" : safeNumber(value);
+          }
         } else {
           row[field] = value;
         }
         row.amount = assetAmount(row);
+        updateAssetRowUI(index);
       } else {
         row[field] = field === "amount" ? safeNumber(value) : value;
       }
 
       saveState();
-      render();
+      renderTotals();
     }
 
     document.addEventListener("input", function(e){
       const t = e.target;
+
+      if (t.id === "btc200wmaInput") {
+        state.btc200wma = t.value === "" ? "" : safeNumber(t.value);
+        recalcAssets(currentMonth());
+        saveState();
+        updateAllAssetRowUI();
+        renderTotals();
+        return;
+      }
+
       if (!t.matches("input[data-type]")) return;
-      updateField(t.dataset.type, Number(t.dataset.index), t.dataset.field, t.value);
+
+      updateFieldWithoutRerender(
+        t.dataset.type,
+        Number(t.dataset.index),
+        t.dataset.field,
+        t.value
+      );
     });
 
     document.addEventListener("click", function(e){
@@ -954,7 +1018,60 @@
       }
 
       if (t.id === "exportBtn") {
-        alert("Preview only.");
+        const month = currentMonth();
+        recalcAssets(month);
+
+        const rows = [
+          ["Month", state.selectedMonth],
+          ["Currency", state.currency],
+          ["Bitcoin 200 Week Moving Average", state.btc200wma],
+          [],
+          ["Income Statement"],
+          ["Income"],
+          ["Description", "Amount"],
+          ...month.income.map(r => [r.description, r.amount]),
+          ["Total Income", sumRows(month.income)],
+          [],
+          ["Expenses"],
+          ["Description", "Amount"],
+          ...month.expenses.map(r => [r.description, r.amount]),
+          ["Total Expenses", sumRows(month.expenses)],
+          [],
+          ["Passive Income", sumPassiveIncome(month.income)],
+          ["Monthly Cash Flow", sumRows(month.income) - sumRows(month.expenses)],
+          [],
+          ["Balance Sheet"],
+          ["Assets"],
+          ["Description", "Quantity", "Price", "Total"],
+          ...month.assets.map(r => [
+            r.description,
+            r.quantity,
+            isBitcoinRow(r) ? state.btc200wma : r.unitPrice,
+            assetAmount(r)
+          ]),
+          ["Total Assets", "", "", sumRows(month.assets)],
+          [],
+          ["Liabilities"],
+          ["Description", "Amount"],
+          ...month.liabilities.map(r => [r.description, r.amount]),
+          ["Total Liabilities", sumRows(month.liabilities)],
+          [],
+          ["Net Worth", sumRows(month.assets) - sumRows(month.liabilities)]
+        ];
+
+        const csv = rows.map(row =>
+          row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
+        ).join("\n");
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "financial-statement-" + state.selectedMonth + ".csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
       }
 
       if (t.dataset.deleteType) {
@@ -968,12 +1085,6 @@
       render();
     });
 
-    document.getElementById("btc200wmaInput").addEventListener("input", function(e){
-      state.btc200wma = e.target.value === "" ? "" : safeNumber(e.target.value);
-      saveState();
-      render();
-    });
-
     ensureMonthExists(state.selectedMonth);
     recalcAssets(currentMonth());
     saveState();
@@ -981,7 +1092,3 @@
   </script>
 </body>
 </html>
-"""
-path = Path("/mnt/data/financial_statement_centered_preview.html")
-path.write_text(html, encoding="utf-8")
-print(path.as_posix()) 乐盈 to=python_user_visible.exec code

@@ -236,7 +236,8 @@
       background:#fcfcfd;
     }
 
-    td input{
+    td input[type="text"],
+    td input[type="number"]{
       width:100%;
       border:1px solid transparent;
       background:transparent;
@@ -605,6 +606,32 @@
       cursor:pointer;
     }
 
+    .covered-wrap{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+    }
+
+    .covered-check{
+      width:18px;
+      height:18px;
+      accent-color:var(--accent);
+      cursor:pointer;
+    }
+
+    .covered-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.04em;
+      background:rgba(0,113,227,.08);
+      color:var(--accent);
+    }
+
     @media (max-width:1020px){
       .income-layout,
       .balance-layout,
@@ -717,6 +744,7 @@
                     <tr>
                       <th>Description</th>
                       <th style="width:160px;">Cash Flow</th>
+                      <th style="width:84px;">Covered</th>
                       <th style="width:74px;"></th>
                     </tr>
                   </thead>
@@ -725,6 +753,7 @@
                     <tr class="total-row">
                       <td>Total Expenses</td>
                       <td class="total-value" id="expenseTotalRow">£0</td>
+                      <td></td>
                       <td></td>
                     </tr>
                   </tfoot>
@@ -975,16 +1004,20 @@
       return Number.isFinite(n) ? n : 0;
     }
 
-    function normalizeMoneyValue(value) {
-      if (value === "" || value === null || value === undefined) return "";
-      return Math.round(safeNumber(value));
-    }
-
     function normalizeRow(row, prefix) {
       return {
         id: row && row.id ? row.id : uid(prefix),
         description: row && typeof row.description === "string" ? row.description : "",
         amount: row && row.amount !== undefined && row.amount !== null && row.amount !== "" ? safeNumber(row.amount) : 0
+      };
+    }
+
+    function normalizeExpenseRow(row) {
+      return {
+        id: row && row.id ? row.id : uid("exp"),
+        description: row && typeof row.description === "string" ? row.description : "",
+        amount: row && row.amount !== undefined && row.amount !== null && row.amount !== "" ? safeNumber(row.amount) : 0,
+        covered: !!(row && row.covered)
       };
     }
 
@@ -1020,7 +1053,7 @@
     function normalizeMonth(month) {
       return {
         income: Array.isArray(month && month.income) ? month.income.map(r => normalizeRow(r, "inc")) : [],
-        expenses: Array.isArray(month && month.expenses) ? month.expenses.map(r => normalizeRow(r, "exp")) : [],
+        expenses: Array.isArray(month && month.expenses) ? month.expenses.map(r => normalizeExpenseRow(r)) : [],
         assets: Array.isArray(month && month.assets) ? month.assets.map(r => migrateAssetRow(r)) : [],
         liabilities: Array.isArray(month && month.liabilities) ? month.liabilities.map(r => normalizeRow(r, "lia")) : []
       };
@@ -1180,18 +1213,26 @@
       return rows;
     }
 
-    function isMoneyField(type, field) {
-      if (type === "income" && field === "amount") return true;
-      if (type === "expenses" && field === "amount") return true;
-      if (type === "liabilities" && field === "amount") return true;
-      if (type === "assets" && field === "unitPrice") return true;
-      return false;
-    }
-
     function renderIncomeExpenseTable(tbodyId, rows, type) {
       const tbody = document.getElementById(tbodyId);
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="3" class="empty">No rows yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">No rows yet.</td></tr>';
+        return;
+      }
+
+      if (type === "expenses") {
+        tbody.innerHTML = rows.map((row, index) => `
+          <tr data-row-type="${type}" data-row-index="${index}">
+            <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
+            <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type}" data-index="${index}" data-field="amount"></td>
+            <td>
+              <div class="covered-wrap">
+                <input class="covered-check" type="checkbox" ${row.covered ? "checked" : ""} data-type="${type}" data-index="${index}" data-field="covered">
+              </div>
+            </td>
+            <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
+          </tr>
+        `).join("");
         return;
       }
 
@@ -1237,7 +1278,7 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
-          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
+          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type="liabilities"}" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1376,6 +1417,8 @@
     function addRow(type) {
       if (type === "assets") {
         currentMonth().assets.push(blankAssetRow());
+      } else if (type === "expenses") {
+        currentMonth().expenses.push({ id: uid("exp"), description: "", amount: 0, covered: false });
       } else {
         currentMonth()[type].push({ id: uid(type.slice(0, 3)), description: "", amount: 0 });
       }
@@ -1389,7 +1432,7 @@
       render();
     }
 
-    function updateFieldWithoutRerender(type, index, field, value) {
+    function updateFieldWithoutRerender(type, index, field, value, checkedValue = null) {
       const row = currentMonth()[type][index];
       if (!row) return;
 
@@ -1405,6 +1448,8 @@
         }
         row.amount = assetAmount(row);
         updateAssetRowUI(index);
+      } else if (type === "expenses" && field === "covered") {
+        row.covered = !!checkedValue;
       } else {
         if (field === "amount") {
           row[field] = value === "" ? 0 : Math.round(safeNumber(value));
@@ -1432,8 +1477,8 @@
         ["TOTAL INCOME", sumRows(month.income)],
         [],
         ["EXPENSES"],
-        ["DESCRIPTION", "AMOUNT"],
-        ...month.expenses.map(r => [r.description, r.amount]),
+        ["DESCRIPTION", "AMOUNT", "COVERED BY PASSIVE INCOME"],
+        ...month.expenses.map(r => [r.description, r.amount, r.covered ? "YES" : "NO"]),
         ["TOTAL EXPENSES", sumRows(month.expenses)],
         [],
         ["PASSIVE INCOME", sumPassiveIncome(month.income)],
@@ -1625,6 +1670,20 @@
         Number(t.dataset.index),
         t.dataset.field,
         t.value
+      );
+    });
+
+    document.addEventListener("change", function(e){
+      const t = e.target;
+      if (state.viewMode !== "month") return;
+      if (!t.matches('input[type="checkbox"][data-field="covered"]')) return;
+
+      updateFieldWithoutRerender(
+        t.dataset.type,
+        Number(t.dataset.index),
+        t.dataset.field,
+        "",
+        t.checked
       );
     });
 

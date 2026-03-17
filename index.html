@@ -197,21 +197,6 @@
       font-weight:700;
     }
 
-    .mini-field{
-      width:100%;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:10px 12px;
-      font-size:14px;
-      color:var(--text);
-      outline:none;
-      font-family:inherit;
-      text-align:right;
-      border-radius:12px;
-      -webkit-appearance:none;
-      appearance:none;
-    }
-
     table{
       width:100%;
       border-collapse:collapse;
@@ -236,7 +221,7 @@
       background:#fcfcfd;
     }
 
-    td input{
+    td input[type="text"]{
       width:100%;
       border:1px solid transparent;
       background:transparent;
@@ -250,23 +235,69 @@
       appearance:none;
     }
 
-    td input:hover{
+    td input[type="text"]:hover{
       background:#fafafc;
       border-color:#f0f0f2;
     }
 
-    td input:focus{
+    td input[type="text"]:focus{
       background:#fff;
       border-color:rgba(0,113,227,.35);
       box-shadow:0 0 0 3px rgba(0,113,227,.12);
     }
 
-    td input[type="number"]{
-      text-align:right;
-      min-width:0;
+    .num-step{
+      display:grid;
+      grid-template-columns:30px 1fr 30px;
+      align-items:center;
+      gap:4px;
     }
 
-    td input[readonly]{
+    .num-step button{
+      height:32px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      cursor:pointer;
+      font-size:16px;
+      line-height:1;
+      padding:0;
+    }
+
+    .num-step button:hover{
+      background:#fafafa;
+      border-color:var(--line-strong);
+    }
+
+    .num-step input{
+      width:100%;
+      min-width:0;
+      border:1px solid transparent;
+      background:transparent;
+      padding:8px 10px;
+      font-size:14px;
+      color:var(--text);
+      outline:none;
+      font-family:inherit;
+      border-radius:10px;
+      -webkit-appearance:none;
+      appearance:none;
+      text-align:right;
+    }
+
+    .num-step input:hover{
+      background:#fafafc;
+      border-color:#f0f0f2;
+    }
+
+    .num-step input:focus{
+      background:#fff;
+      border-color:rgba(0,113,227,.35);
+      box-shadow:0 0 0 3px rgba(0,113,227,.12);
+    }
+
+    .num-step input[readonly]{
       color:#5c5c61;
       background:#f7f7f8;
       border-color:#ededf0;
@@ -515,6 +546,14 @@
         padding:6px 8px;
         font-size:11px;
       }
+
+      .num-step{
+        grid-template-columns:26px 1fr 26px;
+      }
+
+      .num-step button{
+        height:28px;
+      }
     }
   </style>
 </head>
@@ -554,7 +593,7 @@
                   <thead>
                     <tr>
                       <th>Description</th>
-                      <th style="width:140px;">Cash Flow</th>
+                      <th style="width:160px;">Cash Flow</th>
                       <th style="width:74px;"></th>
                     </tr>
                   </thead>
@@ -578,7 +617,7 @@
                   <thead>
                     <tr>
                       <th>Description</th>
-                      <th style="width:140px;">Cash Flow</th>
+                      <th style="width:160px;">Cash Flow</th>
                       <th style="width:74px;"></th>
                     </tr>
                   </thead>
@@ -651,7 +690,11 @@
 
               <div class="mini-field-wrap">
                 <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
-                <input class="mini-field" id="btc200wmaInput" type="number" step="0.01" placeholder="Enter value">
+                <div class="num-step">
+                  <button type="button" data-step-target="btc200wmaInput" data-step-dir="-1">−</button>
+                  <input id="btc200wmaInput" type="number" step="0.01" placeholder="Enter value">
+                  <button type="button" data-step-target="btc200wmaInput" data-step-dir="1">+</button>
+                </div>
               </div>
 
               <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
@@ -665,7 +708,7 @@
                 <thead>
                   <tr>
                     <th>Description</th>
-                    <th style="width:140px;">Value</th>
+                    <th style="width:160px;">Value</th>
                     <th style="width:74px;"></th>
                   </tr>
                 </thead>
@@ -685,8 +728,8 @@
 
         <div class="footer-summary">
           <div class="footer-item">
-            <div class="footer-label">Net Worth</div>
-            <div class="footer-value" id="netWorth">£0</div>
+            <div class="footer-label">Assets</div>
+            <div class="footer-value" id="assetsFooterValue">£0</div>
           </div>
         </div>
       </div>
@@ -708,8 +751,8 @@
             <div class="summary-value" id="yearCashflowTotal">£0</div>
           </div>
           <div class="summary-card">
-            <div class="summary-label">Year-End Net Worth</div>
-            <div class="summary-value" id="yearEndNetWorth">£0</div>
+            <div class="summary-label">Year-End Assets</div>
+            <div class="summary-value" id="yearEndAssets">£0</div>
           </div>
         </div>
 
@@ -722,17 +765,17 @@
                   <th>Month</th>
                   <th>Income</th>
                   <th>Passive Income</th>
-                  <th>Net Worth</th>
+                  <th>Assets</th>
                   <th>Net Liabilities</th>
                 </tr>
               </thead>
               <tbody id="yearTableBody"></tbody>
               <tfoot>
                 <tr class="total-row">
-                  <td>Totals</td>
+                  <td>Year End / Totals</td>
                   <td class="total-value" id="yearIncomeFooter">£0</td>
                   <td class="total-value" id="yearPassiveFooter">£0</td>
-                  <td class="total-value" id="yearNetWorthFooter">£0</td>
+                  <td class="total-value" id="yearAssetsFooter">£0</td>
                   <td class="total-value" id="yearLiabilityFooter">£0</td>
                 </tr>
               </tfoot>
@@ -744,6 +787,18 @@
   </div>
 
   <script>
+    function monthKeyFromDate(d) {
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+    }
+
+    function currentMonthKey() {
+      return monthKeyFromDate(new Date());
+    }
+
+    function blankMonth() {
+      return { income: [], expenses: [], assets: [], liabilities: [] };
+    }
+
     const STORAGE_KEY = "kyosaki-financial-statement-v4";
 
     const defaultState = {
@@ -756,14 +811,6 @@
         [currentMonthKey()]: blankMonth()
       }
     };
-
-    function monthKeyFromDate(d) {
-      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-    }
-
-    function currentMonthKey() {
-      return monthKeyFromDate(new Date());
-    }
 
     function shiftMonth(monthKey, delta) {
       const parts = monthKey.split("-").map(Number);
@@ -789,10 +836,6 @@
       return prefix + "_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
     }
 
-    function blankMonth() {
-      return { income: [], expenses: [], assets: [], liabilities: [] };
-    }
-
     function blankAssetRow() {
       return {
         id: uid("ast"),
@@ -811,6 +854,45 @@
       if (value === "" || value === null || value === undefined) return 0;
       const n = Number(value);
       return Number.isFinite(n) ? n : 0;
+    }
+
+    function decimalsFromStep(stepValue) {
+      const s = String(stepValue || "1");
+      if (!s.includes(".")) return 0;
+      return s.split(".")[1].length;
+    }
+
+    function formatNumberForInput(num, stepValue) {
+      const decimals = decimalsFromStep(stepValue);
+      return String(Number(num.toFixed(decimals)));
+    }
+
+    function numericInputHtml({ value, step, dataType, dataIndex, dataField, readOnly=false, inputId="" }) {
+      const attrs = [
+        inputId ? `id="${inputId}"` : "",
+        `type="number"`,
+        `step="${step}"`,
+        value === "" ? `value=""` : `value="${value}"`,
+        dataType ? `data-type="${dataType}"` : "",
+        dataIndex !== undefined ? `data-index="${dataIndex}"` : "",
+        dataField ? `data-field="${dataField}"` : "",
+        readOnly ? `readonly` : ""
+      ].filter(Boolean).join(" ");
+
+      const minusAttrs = inputId
+        ? `data-step-target="${inputId}" data-step-dir="-1"`
+        : `data-step-dir="-1"`;
+      const plusAttrs = inputId
+        ? `data-step-target="${inputId}" data-step-dir="1"`
+        : `data-step-dir="1"`;
+
+      return `
+        <div class="num-step">
+          <button type="button" ${minusAttrs}>−</button>
+          <input ${attrs}>
+          <button type="button" ${plusAttrs}>+</button>
+        </div>
+      `;
     }
 
     function normalizeRow(row, prefix) {
@@ -843,8 +925,8 @@
 
       return {
         id: row.id || uid("ast"),
-        description: description,
-        quantity: quantity,
+        description,
+        quantity,
         unitPrice: isBitcoin ? "" : (oldAmount ? oldAmount : ""),
         amount: oldAmount
       };
@@ -976,14 +1058,13 @@
       const totalExpenses = sumRows(month.expenses);
       const totalAssets = sumRows(month.assets);
       const totalLiabilities = sumRows(month.liabilities);
-      const netWorth = totalAssets - totalLiabilities;
+
       return {
         totalIncome,
         passiveIncome,
         totalExpenses,
         totalAssets,
         totalLiabilities,
-        netWorth,
         cashflow: totalIncome - totalExpenses
       };
     }
@@ -996,11 +1077,10 @@
       const rows = [];
       for (let m = 1; m <= 12; m++) {
         const key = yearMonthKey(year, m);
-        const metrics = getMonthMetrics(key);
         rows.push({
           key,
           monthName: formatYearMonthLabel(year, m - 1),
-          ...metrics
+          ...getMonthMetrics(key)
         });
       }
       return rows;
@@ -1016,7 +1096,13 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="${type}" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
-          <td><input type="number" step="0.01" value="${row.amount === 0 ? "" : row.amount}" data-type="${type}" data-index="${index}" data-field="amount"></td>
+          <td>${numericInputHtml({
+            value: row.amount === 0 ? "" : row.amount,
+            step: "0.01",
+            dataType: type,
+            dataIndex: index,
+            dataField: "amount"
+          })}</td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1030,26 +1116,37 @@
       }
 
       tbody.innerHTML = rows.map((row, index) => {
-        const qtyValue = row.quantity === "" ? "" : row.quantity;
-        const priceValue = row.unitPrice === "" ? "" : row.unitPrice;
         const total = assetAmount(row);
         const bitcoin = isBitcoinRow(row);
 
         return `
           <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
-            <td><input type="number" step="0.00000001" value="${qtyValue}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td>
-              <input
-                type="number"
-                step="0.01"
-                value="${bitcoin ? (state.btc200wma === "" ? "" : state.btc200wma) : priceValue}"
-                data-type="assets"
-                data-index="${index}"
-                data-field="unitPrice"
-                ${bitcoin ? "readonly" : ""}
-              >
-            </td>
+            <td>${numericInputHtml({
+              value: row.quantity === "" ? "" : row.quantity,
+              step: "0.00000001",
+              dataType: "assets",
+              dataIndex: index,
+              dataField: "quantity"
+            })}</td>
+            <td>${
+              bitcoin
+                ? numericInputHtml({
+                    value: state.btc200wma === "" ? "" : state.btc200wma,
+                    step: "0.01",
+                    dataType: "assets",
+                    dataIndex: index,
+                    dataField: "unitPrice",
+                    readOnly: true
+                  })
+                : numericInputHtml({
+                    value: row.unitPrice === "" ? "" : row.unitPrice,
+                    step: "0.01",
+                    dataType: "assets",
+                    dataIndex: index,
+                    dataField: "unitPrice"
+                  })
+            }</td>
             <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -1067,7 +1164,13 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
-          <td><input type="number" step="0.01" value="${row.amount === 0 ? "" : row.amount}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
+          <td>${numericInputHtml({
+            value: row.amount === 0 ? "" : row.amount,
+            step: "0.01",
+            dataType: "liabilities",
+            dataIndex: index,
+            dataField: "amount"
+          })}</td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1103,7 +1206,6 @@
 
     function renderMonthTotals() {
       const month = currentMonth();
-
       const totalIncome = sumRows(month.income);
       const totalExpenses = sumRows(month.expenses);
       const totalAssets = sumRows(month.assets);
@@ -1114,12 +1216,16 @@
       document.getElementById("totalIncome").textContent = fmtMoney(totalIncome);
       document.getElementById("totalExpenses").textContent = fmtMoney(totalExpenses);
       document.getElementById("cashflow").textContent = fmtMoney(totalIncome - totalExpenses);
-      document.getElementById("netWorth").textContent = fmtMoney(totalAssets - totalLiabilities);
+      document.getElementById("assetsFooterValue").textContent = fmtMoney(totalAssets);
       document.getElementById("incomeTotalRow").textContent = fmtMoney(totalIncome);
       document.getElementById("expenseTotalRow").textContent = fmtMoney(totalExpenses);
       document.getElementById("assetTotalRow").textContent = fmtMoney(totalAssets);
       document.getElementById("liabilityTotalRow").textContent = fmtMoney(totalLiabilities);
-      document.getElementById("btc200wmaInput").value = state.btc200wma === "" ? "" : state.btc200wma;
+
+      const btcInput = document.getElementById("btc200wmaInput");
+      if (btcInput) {
+        btcInput.value = state.btc200wma === "" ? "" : state.btc200wma;
+      }
     }
 
     function renderYearView() {
@@ -1131,7 +1237,7 @@
           <td>${row.monthName}</td>
           <td class="num">${fmtMoney(row.totalIncome)}</td>
           <td class="num">${fmtMoney(row.passiveIncome)}</td>
-          <td class="num">${fmtMoney(row.netWorth)}</td>
+          <td class="num">${fmtMoney(row.totalAssets)}</td>
           <td class="num">${fmtMoney(row.totalLiabilities)}</td>
         </tr>
       `).join("");
@@ -1139,19 +1245,18 @@
       const annualIncome = rows.reduce((sum, r) => sum + r.totalIncome, 0);
       const annualPassive = rows.reduce((sum, r) => sum + r.passiveIncome, 0);
       const annualCashflow = rows.reduce((sum, r) => sum + r.cashflow, 0);
-      const yearEndNetWorth = rows[11].netWorth;
-      const totalNetWorthSum = rows.reduce((sum, r) => sum + r.netWorth, 0);
-      const totalLiabilitySum = rows.reduce((sum, r) => sum + r.totalLiabilities, 0);
+      const yearEndAssets = rows[11].totalAssets;
+      const yearEndLiabilities = rows[11].totalLiabilities;
 
       document.getElementById("yearIncomeTotal").textContent = fmtMoney(annualIncome);
       document.getElementById("yearPassiveTotal").textContent = fmtMoney(annualPassive);
       document.getElementById("yearCashflowTotal").textContent = fmtMoney(annualCashflow);
-      document.getElementById("yearEndNetWorth").textContent = fmtMoney(yearEndNetWorth);
+      document.getElementById("yearEndAssets").textContent = fmtMoney(yearEndAssets);
 
       document.getElementById("yearIncomeFooter").textContent = fmtMoney(annualIncome);
       document.getElementById("yearPassiveFooter").textContent = fmtMoney(annualPassive);
-      document.getElementById("yearNetWorthFooter").textContent = fmtMoney(totalNetWorthSum);
-      document.getElementById("yearLiabilityFooter").textContent = fmtMoney(totalLiabilitySum);
+      document.getElementById("yearAssetsFooter").textContent = fmtMoney(yearEndAssets);
+      document.getElementById("yearLiabilityFooter").textContent = fmtMoney(yearEndLiabilities);
     }
 
     function renderPeriodLabel() {
@@ -1276,9 +1381,7 @@
         ["LIABILITIES"],
         ["DESCRIPTION", "AMOUNT"],
         ...month.liabilities.map(r => [r.description, r.amount]),
-        ["TOTAL LIABILITIES", sumRows(month.liabilities)],
-        [],
-        ["NET WORTH", sumRows(month.assets) - sumRows(month.liabilities)]
+        ["TOTAL LIABILITIES", sumRows(month.liabilities)]
       ];
 
       downloadCsv(rows, "financial-statement-" + state.selectedMonth + ".csv");
@@ -1288,22 +1391,20 @@
       const rowsData = yearMetrics(state.selectedYear);
       const annualIncome = rowsData.reduce((sum, r) => sum + r.totalIncome, 0);
       const annualPassive = rowsData.reduce((sum, r) => sum + r.passiveIncome, 0);
-      const annualNetWorthSum = rowsData.reduce((sum, r) => sum + r.netWorth, 0);
-      const annualLiabilitySum = rowsData.reduce((sum, r) => sum + r.totalLiabilities, 0);
       const annualCashflow = rowsData.reduce((sum, r) => sum + r.cashflow, 0);
-      const yearEndNetWorth = rowsData[11].netWorth;
+      const yearEndAssets = rowsData[11].totalAssets;
+      const yearEndLiabilities = rowsData[11].totalLiabilities;
 
       const rows = [
         ["YEAR", state.selectedYear],
         ["CURRENCY", state.currency],
         [],
         ["YEAR OVERVIEW"],
-        ["MONTH", "INCOME", "PASSIVE INCOME", "NET WORTH", "NET LIABILITIES"],
-        ...rowsData.map(r => [r.monthName, r.totalIncome, r.passiveIncome, r.netWorth, r.totalLiabilities]),
-        ["TOTALS", annualIncome, annualPassive, annualNetWorthSum, annualLiabilitySum],
+        ["MONTH", "INCOME", "PASSIVE INCOME", "ASSETS", "NET LIABILITIES"],
+        ...rowsData.map(r => [r.monthName, r.totalIncome, r.passiveIncome, r.totalAssets, r.totalLiabilities]),
+        ["YEAR END / TOTALS", annualIncome, annualPassive, yearEndAssets, yearEndLiabilities],
         [],
-        ["ANNUAL CASH FLOW", annualCashflow],
-        ["YEAR-END NET WORTH", yearEndNetWorth]
+        ["ANNUAL CASH FLOW", annualCashflow]
       ];
 
       downloadCsv(rows, "financial-statement-year-" + state.selectedYear + ".csv");
@@ -1312,7 +1413,7 @@
     function downloadCsv(rows, filename) {
       const csv = rows.map(row =>
         row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-      ).join("\n");
+      ).join("\\n");
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -1351,6 +1452,26 @@
 
     document.addEventListener("click", function(e){
       const t = e.target;
+
+      if (t.dataset.stepDir) {
+        let input = null;
+
+        if (t.dataset.stepTarget) {
+          input = document.getElementById(t.dataset.stepTarget);
+        } else {
+          const wrapper = t.closest(".num-step");
+          if (wrapper) input = wrapper.querySelector("input");
+        }
+
+        if (input && !input.readOnly) {
+          const dir = Number(t.dataset.stepDir);
+          const step = Number(input.step || 1);
+          const current = input.value === "" ? 0 : safeNumber(input.value);
+          const next = current + (dir * step);
+          input.value = formatNumberForInput(next, input.step || "1");
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
 
       if (t.id === "toggleViewBtn") {
         if (state.viewMode === "month") {

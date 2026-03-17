@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Financial Statement</title>
   <style>
     :root{
@@ -18,7 +18,6 @@
       --soft:#f0f2f5;
       --shadow:0 8px 24px rgba(0,0,0,.06);
       --radius:18px;
-      --radius-sm:12px;
     }
 
     *{box-sizing:border-box}
@@ -63,7 +62,7 @@
       align-items:center;
     }
 
-    .month-picker{
+    .period-picker{
       display:flex;
       align-items:center;
       gap:10px;
@@ -75,7 +74,7 @@
       backdrop-filter:blur(8px);
     }
 
-    .month-nav{
+    .period-nav{
       border:0;
       background:transparent;
       color:var(--text);
@@ -86,11 +85,11 @@
       border-radius:999px;
     }
 
-    .month-nav:hover{
+    .period-nav:hover{
       background:var(--soft);
     }
 
-    .month-label{
+    .period-label{
       min-width:132px;
       text-align:center;
       font-size:14px;
@@ -117,6 +116,17 @@
     .btn:hover,
     .select:hover{
       border-color:var(--line-strong);
+    }
+
+    .btn.primary{
+      border-color:rgba(0,113,227,.18);
+      background:rgba(0,113,227,.08);
+      color:var(--accent);
+    }
+
+    .btn.primary:hover{
+      background:rgba(0,113,227,.12);
+      color:var(--accent-hover);
     }
 
     .sheet{
@@ -313,6 +323,13 @@
       gap:12px;
     }
 
+    .summary-grid-year{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0,1fr));
+      gap:12px;
+      margin-bottom:16px;
+    }
+
     .summary-card{
       border:1px solid var(--line);
       padding:16px;
@@ -444,9 +461,24 @@
     .asset-total-col{width:108px}
     .asset-action-col{width:58px}
 
+    .year-table th,
+    .year-table td{
+      padding:10px 10px;
+    }
+
+    .year-table td.num{
+      text-align:right;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
     @media (max-width:1020px){
       .income-layout,
-      .balance-layout{
+      .balance-layout,
+      .summary-grid-year{
         grid-template-columns:1fr;
       }
 
@@ -458,10 +490,6 @@
     @media (max-width:760px){
       .summary-side{
         grid-template-columns:1fr;
-      }
-
-      .sheet{
-        padding:0;
       }
 
       .page-title{
@@ -496,11 +524,13 @@
       <h1 class="page-title">Financial Statement</h1>
 
       <div class="toolbar">
-        <div class="month-picker">
-          <button class="month-nav" id="prevMonth" type="button">‹</button>
-          <div class="month-label" id="monthLabel">March 2026</div>
-          <button class="month-nav" id="nextMonth" type="button">›</button>
+        <div class="period-picker">
+          <button class="period-nav" id="prevPeriod" type="button">‹</button>
+          <div class="period-label" id="periodLabel">March 2026</div>
+          <button class="period-nav" id="nextPeriod" type="button">›</button>
         </div>
+
+        <button class="btn primary" id="toggleViewBtn" type="button">Year View</button>
 
         <select id="currencySelect" class="select">
           <option value="GBP">GBP (£)</option>
@@ -512,150 +542,202 @@
     </div>
 
     <div class="sheet">
-      <h2 class="section-heading">Income Statement</h2>
+      <div id="monthView">
+        <h2 class="section-heading">Income Statement</h2>
 
-      <div class="income-layout">
-        <div>
-          <div class="box" style="margin-bottom:14px;">
-            <div class="box-title">Income</div>
+        <div class="income-layout">
+          <div>
+            <div class="box" style="margin-bottom:14px;">
+              <div class="box-title">Income</div>
+              <div class="box-body">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th style="width:140px;">Cash Flow</th>
+                      <th style="width:74px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="incomeTable"></tbody>
+                  <tfoot>
+                    <tr class="total-row">
+                      <td>Total Income</td>
+                      <td class="total-value" id="incomeTotalRow">£0</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+                <button class="add-row" type="button" id="addIncome">+ Add Income Row</button>
+              </div>
+            </div>
+
+            <div class="box">
+              <div class="box-title">Expenses</div>
+              <div class="box-body">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Description</th>
+                      <th style="width:140px;">Cash Flow</th>
+                      <th style="width:74px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="expenseTable"></tbody>
+                  <tfoot>
+                    <tr class="total-row">
+                      <td>Total Expenses</td>
+                      <td class="total-value" id="expenseTotalRow">£0</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+                <button class="add-row" type="button" id="addExpense">+ Add Expense Row</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-side">
+            <div class="summary-card">
+              <div class="summary-label">Passive Income</div>
+              <div class="summary-value" id="passiveIncome">£0</div>
+              <div class="summary-note">Cash flow from non-salary income.</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-label">Total Income</div>
+              <div class="summary-value" id="totalIncome">£0</div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-label">Total Expenses</div>
+              <div class="summary-value" id="totalExpenses">£0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cashflow-row">
+          <div>
+            <div class="cashflow-title">Monthly Cash Flow</div>
+            <div class="cashflow-sub">(Total Income - Total Expenses)</div>
+          </div>
+          <div class="cashflow-value" id="cashflow">£0</div>
+        </div>
+
+        <h2 class="section-heading">Balance Sheet</h2>
+
+        <div class="balance-layout">
+          <div class="box">
+            <div class="box-title">Assets</div>
             <div class="box-body">
-              <table>
+              <table class="asset-table">
                 <thead>
                   <tr>
-                    <th>Description</th>
-                    <th style="width:140px;">Cash Flow</th>
-                    <th style="width:74px;"></th>
+                    <th class="asset-desc-col">Description</th>
+                    <th class="asset-qty-col">Qty</th>
+                    <th class="asset-price-col">Price</th>
+                    <th class="asset-total-col">Total</th>
+                    <th class="asset-action-col"></th>
                   </tr>
                 </thead>
-                <tbody id="incomeTable"></tbody>
+                <tbody id="assetTable"></tbody>
                 <tfoot>
                   <tr class="total-row">
-                    <td>Total Income</td>
-                    <td class="total-value" id="incomeTotalRow">£0</td>
+                    <td colspan="3">Total Assets</td>
+                    <td class="total-value" id="assetTotalRow">£0</td>
                     <td></td>
                   </tr>
                 </tfoot>
               </table>
-              <button class="add-row" type="button" id="addIncome">+ Add Income Row</button>
+
+              <div class="mini-field-wrap">
+                <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
+                <input class="mini-field" id="btc200wmaInput" type="number" step="0.01" placeholder="Enter value">
+              </div>
+
+              <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
             </div>
           </div>
 
           <div class="box">
-            <div class="box-title">Expenses</div>
+            <div class="box-title">Liabilities</div>
             <div class="box-body">
               <table>
                 <thead>
                   <tr>
                     <th>Description</th>
-                    <th style="width:140px;">Cash Flow</th>
+                    <th style="width:140px;">Value</th>
                     <th style="width:74px;"></th>
                   </tr>
                 </thead>
-                <tbody id="expenseTable"></tbody>
+                <tbody id="liabilityTable"></tbody>
                 <tfoot>
                   <tr class="total-row">
-                    <td>Total Expenses</td>
-                    <td class="total-value" id="expenseTotalRow">£0</td>
+                    <td>Total Liabilities</td>
+                    <td class="total-value" id="liabilityTotalRow">£0</td>
                     <td></td>
                   </tr>
                 </tfoot>
               </table>
-              <button class="add-row" type="button" id="addExpense">+ Add Expense Row</button>
+              <button class="add-row" type="button" id="addLiability">+ Add Liability Row</button>
             </div>
           </div>
         </div>
 
-        <div class="summary-side">
-          <div class="summary-card">
-            <div class="summary-label">Passive Income</div>
-            <div class="summary-value" id="passiveIncome">£0</div>
-            <div class="summary-note">Cash flow from non-salary income.</div>
-          </div>
-
-          <div class="summary-card">
-            <div class="summary-label">Total Income</div>
-            <div class="summary-value" id="totalIncome">£0</div>
-          </div>
-
-          <div class="summary-card">
-            <div class="summary-label">Total Expenses</div>
-            <div class="summary-value" id="totalExpenses">£0</div>
+        <div class="footer-summary">
+          <div class="footer-item">
+            <div class="footer-label">Net Worth</div>
+            <div class="footer-value" id="netWorth">£0</div>
           </div>
         </div>
       </div>
 
-      <div class="cashflow-row">
-        <div>
-          <div class="cashflow-title">Monthly Cash Flow</div>
-          <div class="cashflow-sub">(Total Income - Total Expenses)</div>
-        </div>
-        <div class="cashflow-value" id="cashflow">£0</div>
-      </div>
+      <div id="yearView" class="hidden">
+        <h2 class="section-heading">Year Overview</h2>
 
-      <h2 class="section-heading">Balance Sheet</h2>
-
-      <div class="balance-layout">
-        <div class="box">
-          <div class="box-title">Assets</div>
-          <div class="box-body">
-            <table class="asset-table">
-              <thead>
-                <tr>
-                  <th class="asset-desc-col">Description</th>
-                  <th class="asset-qty-col">Qty</th>
-                  <th class="asset-price-col">Price</th>
-                  <th class="asset-total-col">Total</th>
-                  <th class="asset-action-col"></th>
-                </tr>
-              </thead>
-              <tbody id="assetTable"></tbody>
-              <tfoot>
-                <tr class="total-row">
-                  <td colspan="3">Total Assets</td>
-                  <td class="total-value" id="assetTotalRow">£0</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-
-            <div class="mini-field-wrap">
-              <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
-              <input class="mini-field" id="btc200wmaInput" type="number" step="0.01" placeholder="Enter value">
-            </div>
-
-            <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
+        <div class="summary-grid-year">
+          <div class="summary-card">
+            <div class="summary-label">Annual Income</div>
+            <div class="summary-value" id="yearIncomeTotal">£0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Annual Passive Income</div>
+            <div class="summary-value" id="yearPassiveTotal">£0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Annual Cash Flow</div>
+            <div class="summary-value" id="yearCashflowTotal">£0</div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-label">Year-End Net Worth</div>
+            <div class="summary-value" id="yearEndNetWorth">£0</div>
           </div>
         </div>
 
         <div class="box">
-          <div class="box-title">Liabilities</div>
+          <div class="box-title">Monthly Summary</div>
           <div class="box-body">
-            <table>
+            <table class="year-table">
               <thead>
                 <tr>
-                  <th>Description</th>
-                  <th style="width:140px;">Value</th>
-                  <th style="width:74px;"></th>
+                  <th>Month</th>
+                  <th>Income</th>
+                  <th>Passive Income</th>
+                  <th>Net Worth</th>
+                  <th>Net Liabilities</th>
                 </tr>
               </thead>
-              <tbody id="liabilityTable"></tbody>
+              <tbody id="yearTableBody"></tbody>
               <tfoot>
                 <tr class="total-row">
-                  <td>Total Liabilities</td>
-                  <td class="total-value" id="liabilityTotalRow">£0</td>
-                  <td></td>
+                  <td>Totals</td>
+                  <td class="total-value" id="yearIncomeFooter">£0</td>
+                  <td class="total-value" id="yearPassiveFooter">£0</td>
+                  <td class="total-value" id="yearNetWorthFooter">£0</td>
+                  <td class="total-value" id="yearLiabilityFooter">£0</td>
                 </tr>
               </tfoot>
             </table>
-            <button class="add-row" type="button" id="addLiability">+ Add Liability Row</button>
           </div>
-        </div>
-      </div>
-
-      <div class="footer-summary">
-        <div class="footer-item">
-          <div class="footer-label">Net Worth</div>
-          <div class="footer-value" id="netWorth">£0</div>
         </div>
       </div>
     </div>
@@ -663,6 +745,17 @@
 
   <script>
     const STORAGE_KEY = "kyosaki-financial-statement-v4";
+
+    const defaultState = {
+      currency: "GBP",
+      selectedMonth: currentMonthKey(),
+      selectedYear: new Date().getFullYear(),
+      viewMode: "month",
+      btc200wma: "",
+      months: {
+        [currentMonthKey()]: blankMonth()
+      }
+    };
 
     function monthKeyFromDate(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -686,6 +779,12 @@
       });
     }
 
+    function formatYearMonthLabel(year, monthIndexZero) {
+      return new Date(year, monthIndexZero, 1).toLocaleDateString("en-GB", {
+        month: "long"
+      });
+    }
+
     function uid(prefix) {
       return prefix + "_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
     }
@@ -703,15 +802,6 @@
         amount: 0
       };
     }
-
-    const defaultData = {
-      currency: "GBP",
-      selectedMonth: currentMonthKey(),
-      btc200wma: "",
-      months: {
-        [currentMonthKey()]: blankMonth()
-      }
-    };
 
     function deepCopy(obj) {
       return JSON.parse(JSON.stringify(obj));
@@ -772,12 +862,14 @@
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return deepCopy(defaultData);
+        if (!raw) return deepCopy(defaultState);
 
         const parsed = JSON.parse(raw);
         const state = {
           currency: parsed.currency || "GBP",
           selectedMonth: parsed.selectedMonth || currentMonthKey(),
+          selectedYear: parsed.selectedYear || Number((parsed.selectedMonth || currentMonthKey()).split("-")[0]),
+          viewMode: parsed.viewMode || "month",
           btc200wma: parsed.btc200wma === undefined ? "" : parsed.btc200wma,
           months: {}
         };
@@ -794,7 +886,7 @@
 
         return state;
       } catch (e) {
-        return deepCopy(defaultData);
+        return deepCopy(defaultState);
       }
     }
 
@@ -820,9 +912,15 @@
       }
     }
 
+    function getMonthData(monthKey) {
+      ensureMonthExists(monthKey);
+      const month = state.months[monthKey];
+      recalcAssets(month);
+      return month;
+    }
+
     function currentMonth() {
-      ensureMonthExists(state.selectedMonth);
-      return state.months[state.selectedMonth];
+      return getMonthData(state.selectedMonth);
     }
 
     function fmtMoney(n) {
@@ -869,6 +967,43 @@
       month.assets.forEach(row => {
         row.amount = assetAmount(row);
       });
+    }
+
+    function getMonthMetrics(monthKey) {
+      const month = getMonthData(monthKey);
+      const totalIncome = sumRows(month.income);
+      const passiveIncome = sumPassiveIncome(month.income);
+      const totalExpenses = sumRows(month.expenses);
+      const totalAssets = sumRows(month.assets);
+      const totalLiabilities = sumRows(month.liabilities);
+      const netWorth = totalAssets - totalLiabilities;
+      return {
+        totalIncome,
+        passiveIncome,
+        totalExpenses,
+        totalAssets,
+        totalLiabilities,
+        netWorth,
+        cashflow: totalIncome - totalExpenses
+      };
+    }
+
+    function yearMonthKey(year, monthNumber) {
+      return year + "-" + String(monthNumber).padStart(2, "0");
+    }
+
+    function yearMetrics(year) {
+      const rows = [];
+      for (let m = 1; m <= 12; m++) {
+        const key = yearMonthKey(year, m);
+        const metrics = getMonthMetrics(key);
+        rows.push({
+          key,
+          monthName: formatYearMonthLabel(year, m - 1),
+          ...metrics
+        });
+      }
+      return rows;
     }
 
     function renderIncomeExpenseTable(tbodyId, rows, type) {
@@ -966,9 +1101,8 @@
       currentMonth().assets.forEach((_, index) => updateAssetRowUI(index));
     }
 
-    function renderTotals() {
+    function renderMonthTotals() {
       const month = currentMonth();
-      recalcAssets(month);
 
       const totalIncome = sumRows(month.income);
       const totalExpenses = sumRows(month.expenses);
@@ -988,18 +1122,83 @@
       document.getElementById("btc200wmaInput").value = state.btc200wma === "" ? "" : state.btc200wma;
     }
 
-    function render() {
+    function renderYearView() {
+      const rows = yearMetrics(state.selectedYear);
+      const tbody = document.getElementById("yearTableBody");
+
+      tbody.innerHTML = rows.map(row => `
+        <tr>
+          <td>${row.monthName}</td>
+          <td class="num">${fmtMoney(row.totalIncome)}</td>
+          <td class="num">${fmtMoney(row.passiveIncome)}</td>
+          <td class="num">${fmtMoney(row.netWorth)}</td>
+          <td class="num">${fmtMoney(row.totalLiabilities)}</td>
+        </tr>
+      `).join("");
+
+      const annualIncome = rows.reduce((sum, r) => sum + r.totalIncome, 0);
+      const annualPassive = rows.reduce((sum, r) => sum + r.passiveIncome, 0);
+      const annualCashflow = rows.reduce((sum, r) => sum + r.cashflow, 0);
+      const yearEndNetWorth = rows[11].netWorth;
+      const totalNetWorthSum = rows.reduce((sum, r) => sum + r.netWorth, 0);
+      const totalLiabilitySum = rows.reduce((sum, r) => sum + r.totalLiabilities, 0);
+
+      document.getElementById("yearIncomeTotal").textContent = fmtMoney(annualIncome);
+      document.getElementById("yearPassiveTotal").textContent = fmtMoney(annualPassive);
+      document.getElementById("yearCashflowTotal").textContent = fmtMoney(annualCashflow);
+      document.getElementById("yearEndNetWorth").textContent = fmtMoney(yearEndNetWorth);
+
+      document.getElementById("yearIncomeFooter").textContent = fmtMoney(annualIncome);
+      document.getElementById("yearPassiveFooter").textContent = fmtMoney(annualPassive);
+      document.getElementById("yearNetWorthFooter").textContent = fmtMoney(totalNetWorthSum);
+      document.getElementById("yearLiabilityFooter").textContent = fmtMoney(totalLiabilitySum);
+    }
+
+    function renderPeriodLabel() {
+      const label = document.getElementById("periodLabel");
+      if (state.viewMode === "month") {
+        label.textContent = formatMonthLabel(state.selectedMonth);
+      } else {
+        label.textContent = String(state.selectedYear);
+      }
+    }
+
+    function renderViewMode() {
+      const monthView = document.getElementById("monthView");
+      const yearView = document.getElementById("yearView");
+      const toggleBtn = document.getElementById("toggleViewBtn");
+
+      if (state.viewMode === "month") {
+        monthView.classList.remove("hidden");
+        yearView.classList.add("hidden");
+        toggleBtn.textContent = "Year View";
+      } else {
+        monthView.classList.add("hidden");
+        yearView.classList.remove("hidden");
+        toggleBtn.textContent = "Month View";
+      }
+    }
+
+    function renderMonthView() {
       const month = currentMonth();
-      recalcAssets(month);
-
-      document.getElementById("monthLabel").textContent = formatMonthLabel(state.selectedMonth);
       document.getElementById("currencySelect").value = state.currency;
-
       renderIncomeExpenseTable("incomeTable", month.income, "income");
       renderIncomeExpenseTable("expenseTable", month.expenses, "expenses");
       renderAssetTable(month.assets);
       renderLiabilityTable(month.liabilities);
-      renderTotals();
+      renderMonthTotals();
+    }
+
+    function render() {
+      document.getElementById("currencySelect").value = state.currency;
+      renderPeriodLabel();
+      renderViewMode();
+
+      if (state.viewMode === "month") {
+        renderMonthView();
+      } else {
+        renderYearView();
+      }
     }
 
     function addRow(type) {
@@ -1039,18 +1238,104 @@
       }
 
       saveState();
-      renderTotals();
+      renderMonthTotals();
+    }
+
+    function exportMonthCsv() {
+      const month = currentMonth();
+      recalcAssets(month);
+
+      const rows = [
+        ["MONTH", state.selectedMonth],
+        ["CURRENCY", state.currency],
+        ["BITCOIN 200 WEEK MOVING AVERAGE", state.btc200wma],
+        [],
+        ["INCOME"],
+        ["DESCRIPTION", "AMOUNT"],
+        ...month.income.map(r => [r.description, r.amount]),
+        ["TOTAL INCOME", sumRows(month.income)],
+        [],
+        ["EXPENSES"],
+        ["DESCRIPTION", "AMOUNT"],
+        ...month.expenses.map(r => [r.description, r.amount]),
+        ["TOTAL EXPENSES", sumRows(month.expenses)],
+        [],
+        ["PASSIVE INCOME", sumPassiveIncome(month.income)],
+        ["MONTHLY CASH FLOW", sumRows(month.income) - sumRows(month.expenses)],
+        [],
+        ["ASSETS"],
+        ["DESCRIPTION", "QUANTITY", "PRICE", "TOTAL"],
+        ...month.assets.map(r => [
+          r.description,
+          r.quantity,
+          isBitcoinRow(r) ? state.btc200wma : r.unitPrice,
+          assetAmount(r)
+        ]),
+        ["TOTAL ASSETS", "", "", sumRows(month.assets)],
+        [],
+        ["LIABILITIES"],
+        ["DESCRIPTION", "AMOUNT"],
+        ...month.liabilities.map(r => [r.description, r.amount]),
+        ["TOTAL LIABILITIES", sumRows(month.liabilities)],
+        [],
+        ["NET WORTH", sumRows(month.assets) - sumRows(month.liabilities)]
+      ];
+
+      downloadCsv(rows, "financial-statement-" + state.selectedMonth + ".csv");
+    }
+
+    function exportYearCsv() {
+      const rowsData = yearMetrics(state.selectedYear);
+      const annualIncome = rowsData.reduce((sum, r) => sum + r.totalIncome, 0);
+      const annualPassive = rowsData.reduce((sum, r) => sum + r.passiveIncome, 0);
+      const annualNetWorthSum = rowsData.reduce((sum, r) => sum + r.netWorth, 0);
+      const annualLiabilitySum = rowsData.reduce((sum, r) => sum + r.totalLiabilities, 0);
+      const annualCashflow = rowsData.reduce((sum, r) => sum + r.cashflow, 0);
+      const yearEndNetWorth = rowsData[11].netWorth;
+
+      const rows = [
+        ["YEAR", state.selectedYear],
+        ["CURRENCY", state.currency],
+        [],
+        ["YEAR OVERVIEW"],
+        ["MONTH", "INCOME", "PASSIVE INCOME", "NET WORTH", "NET LIABILITIES"],
+        ...rowsData.map(r => [r.monthName, r.totalIncome, r.passiveIncome, r.netWorth, r.totalLiabilities]),
+        ["TOTALS", annualIncome, annualPassive, annualNetWorthSum, annualLiabilitySum],
+        [],
+        ["ANNUAL CASH FLOW", annualCashflow],
+        ["YEAR-END NET WORTH", yearEndNetWorth]
+      ];
+
+      downloadCsv(rows, "financial-statement-year-" + state.selectedYear + ".csv");
+    }
+
+    function downloadCsv(rows, filename) {
+      const csv = rows.map(row =>
+        row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
+      ).join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
     }
 
     document.addEventListener("input", function(e){
       const t = e.target;
+
+      if (state.viewMode !== "month") return;
 
       if (t.id === "btc200wmaInput") {
         state.btc200wma = t.value === "" ? "" : safeNumber(t.value);
         recalcAssets(currentMonth());
         saveState();
         updateAllAssetRowUI();
-        renderTotals();
+        renderMonthTotals();
         return;
       }
 
@@ -1067,82 +1352,61 @@
     document.addEventListener("click", function(e){
       const t = e.target;
 
-      if (t.id === "addIncome") addRow("income");
-      if (t.id === "addExpense") addRow("expenses");
-      if (t.id === "addAsset") addRow("assets");
-      if (t.id === "addLiability") addRow("liabilities");
-
-      if (t.id === "prevMonth") {
-        state.selectedMonth = shiftMonth(state.selectedMonth, -1);
-        ensureMonthExists(state.selectedMonth);
+      if (t.id === "toggleViewBtn") {
+        if (state.viewMode === "month") {
+          state.viewMode = "year";
+          state.selectedYear = Number(state.selectedMonth.split("-")[0]);
+        } else {
+          state.viewMode = "month";
+          const monthPart = state.selectedMonth.split("-")[1] || "01";
+          state.selectedMonth = state.selectedYear + "-" + monthPart;
+          ensureMonthExists(state.selectedMonth);
+        }
         saveState();
         render();
       }
 
-      if (t.id === "nextMonth") {
-        state.selectedMonth = shiftMonth(state.selectedMonth, 1);
-        ensureMonthExists(state.selectedMonth);
+      if (t.id === "prevPeriod") {
+        if (state.viewMode === "month") {
+          state.selectedMonth = shiftMonth(state.selectedMonth, -1);
+          state.selectedYear = Number(state.selectedMonth.split("-")[0]);
+          ensureMonthExists(state.selectedMonth);
+        } else {
+          state.selectedYear -= 1;
+        }
         saveState();
         render();
+      }
+
+      if (t.id === "nextPeriod") {
+        if (state.viewMode === "month") {
+          state.selectedMonth = shiftMonth(state.selectedMonth, 1);
+          state.selectedYear = Number(state.selectedMonth.split("-")[0]);
+          ensureMonthExists(state.selectedMonth);
+        } else {
+          state.selectedYear += 1;
+        }
+        saveState();
+        render();
+      }
+
+      if (state.viewMode === "month") {
+        if (t.id === "addIncome") addRow("income");
+        if (t.id === "addExpense") addRow("expenses");
+        if (t.id === "addAsset") addRow("assets");
+        if (t.id === "addLiability") addRow("liabilities");
+
+        if (t.dataset.deleteType) {
+          deleteRow(t.dataset.deleteType, Number(t.dataset.deleteIndex));
+        }
       }
 
       if (t.id === "exportBtn") {
-        const month = currentMonth();
-        recalcAssets(month);
-
-        const rows = [
-          ["MONTH", state.selectedMonth],
-          ["CURRENCY", state.currency],
-          ["BITCOIN 200 WEEK MOVING AVERAGE", state.btc200wma],
-          [],
-          ["INCOME"],
-          ["DESCRIPTION", "AMOUNT"],
-          ...month.income.map(r => [r.description, r.amount]),
-          ["TOTAL INCOME", sumRows(month.income)],
-          [],
-          ["EXPENSES"],
-          ["DESCRIPTION", "AMOUNT"],
-          ...month.expenses.map(r => [r.description, r.amount]),
-          ["TOTAL EXPENSES", sumRows(month.expenses)],
-          [],
-          ["PASSIVE INCOME", sumPassiveIncome(month.income)],
-          ["MONTHLY CASH FLOW", sumRows(month.income) - sumRows(month.expenses)],
-          [],
-          ["ASSETS"],
-          ["DESCRIPTION", "QUANTITY", "PRICE", "TOTAL"],
-          ...month.assets.map(r => [
-            r.description,
-            r.quantity,
-            isBitcoinRow(r) ? state.btc200wma : r.unitPrice,
-            assetAmount(r)
-          ]),
-          ["TOTAL ASSETS", "", "", sumRows(month.assets)],
-          [],
-          ["LIABILITIES"],
-          ["DESCRIPTION", "AMOUNT"],
-          ...month.liabilities.map(r => [r.description, r.amount]),
-          ["TOTAL LIABILITIES", sumRows(month.liabilities)],
-          [],
-          ["NET WORTH", sumRows(month.assets) - sumRows(month.liabilities)]
-        ];
-
-        const csv = rows.map(row =>
-          row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-        ).join("\n");
-
-        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "financial-statement-" + state.selectedMonth + ".csv";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      }
-
-      if (t.dataset.deleteType) {
-        deleteRow(t.dataset.deleteType, Number(t.dataset.deleteIndex));
+        if (state.viewMode === "month") {
+          exportMonthCsv();
+        } else {
+          exportYearCsv();
+        }
       }
     });
 
@@ -1153,6 +1417,7 @@
     });
 
     ensureMonthExists(state.selectedMonth);
+    state.selectedYear = Number(state.selectedMonth.split("-")[0]);
     recalcAssets(currentMonth());
     saveState();
     render();

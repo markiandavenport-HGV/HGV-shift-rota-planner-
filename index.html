@@ -197,6 +197,21 @@
       font-weight:700;
     }
 
+    .mini-field{
+      width:100%;
+      border:1px solid var(--line);
+      background:#fff;
+      padding:10px 12px;
+      font-size:14px;
+      color:var(--text);
+      outline:none;
+      font-family:inherit;
+      text-align:right;
+      border-radius:12px;
+      -webkit-appearance:none;
+      appearance:none;
+    }
+
     table{
       width:100%;
       border-collapse:collapse;
@@ -221,7 +236,7 @@
       background:#fcfcfd;
     }
 
-    td input[type="text"]{
+    td input{
       width:100%;
       border:1px solid transparent;
       background:transparent;
@@ -235,72 +250,30 @@
       appearance:none;
     }
 
-    td input[type="text"]:hover{
+    td input:hover{
       background:#fafafc;
       border-color:#f0f0f2;
     }
 
-    td input[type="text"]:focus{
+    td input:focus{
       background:#fff;
       border-color:rgba(0,113,227,.35);
       box-shadow:0 0 0 3px rgba(0,113,227,.12);
     }
 
-    .num-step{
-      display:grid;
-      grid-template-columns:30px 1fr 30px;
-      align-items:center;
-      gap:4px;
-    }
-
-    .num-step button{
-      height:32px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--text);
-      border-radius:999px;
-      cursor:pointer;
-      font-size:16px;
-      line-height:1;
-      padding:0;
-    }
-
-    .num-step button:hover{
-      background:#fafafa;
-      border-color:var(--line-strong);
-    }
-
-    .num-step input{
-      width:100%;
-      min-width:0;
-      border:1px solid transparent;
-      background:transparent;
-      padding:8px 10px;
-      font-size:14px;
-      color:var(--text);
-      outline:none;
-      font-family:inherit;
-      border-radius:10px;
-      -webkit-appearance:none;
-      appearance:none;
+    td input[type="number"]{
       text-align:right;
+      min-width:0;
     }
 
-    .num-step input:hover{
-      background:#fafafc;
-      border-color:#f0f0f2;
-    }
-
-    .num-step input:focus{
-      background:#fff;
-      border-color:rgba(0,113,227,.35);
-      box-shadow:0 0 0 3px rgba(0,113,227,.12);
-    }
-
-    .num-step input[readonly]{
+    td input[readonly]{
       color:#5c5c61;
       background:#f7f7f8;
       border-color:#ededf0;
+    }
+
+    .money-picker-target{
+      cursor:pointer;
     }
 
     .readonly-cell{
@@ -506,6 +479,132 @@
       display:none !important;
     }
 
+    .picker-overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.28);
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      z-index:9999;
+      padding:12px;
+    }
+
+    .picker-sheet{
+      width:min(520px,100%);
+      background:rgba(248,248,248,.96);
+      backdrop-filter:blur(20px);
+      border-radius:22px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
+
+    .picker-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:14px 16px;
+      border-bottom:1px solid #d9d9de;
+      background:rgba(255,255,255,.72);
+    }
+
+    .picker-title{
+      font-size:16px;
+      font-weight:700;
+      letter-spacing:-.01em;
+    }
+
+    .picker-btn{
+      border:0;
+      background:transparent;
+      color:var(--accent);
+      font-size:16px;
+      font-weight:600;
+      padding:6px 8px;
+      cursor:pointer;
+    }
+
+    .picker-body{
+      padding:14px 16px 18px;
+    }
+
+    .picker-display{
+      text-align:center;
+      font-size:32px;
+      font-weight:700;
+      letter-spacing:-.03em;
+      padding:10px 0 14px;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .picker-wheel-wrap{
+      position:relative;
+      height:220px;
+      border-radius:18px;
+      overflow:hidden;
+      background:linear-gradient(180deg,#f4f4f6 0%,#fff 35%,#fff 65%,#f4f4f6 100%);
+      border:1px solid #e2e2e7;
+    }
+
+    .picker-wheel{
+      height:220px;
+      overflow-y:auto;
+      scroll-snap-type:y mandatory;
+      -webkit-overflow-scrolling:touch;
+      padding:88px 0;
+      scrollbar-width:none;
+    }
+
+    .picker-wheel::-webkit-scrollbar{
+      display:none;
+    }
+
+    .picker-row{
+      height:44px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      scroll-snap-align:center;
+      font-size:24px;
+      color:#7a7a80;
+      font-variant-numeric:tabular-nums;
+    }
+
+    .picker-row.active{
+      color:var(--text);
+      font-weight:700;
+    }
+
+    .picker-highlight{
+      position:absolute;
+      left:10px;
+      right:10px;
+      top:88px;
+      height:44px;
+      border-radius:12px;
+      border-top:1px solid #d7d7dc;
+      border-bottom:1px solid #d7d7dc;
+      background:rgba(255,255,255,.72);
+      pointer-events:none;
+    }
+
+    .picker-quick{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:center;
+      margin-top:14px;
+    }
+
+    .picker-chip{
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      cursor:pointer;
+    }
+
     @media (max-width:1020px){
       .income-layout,
       .balance-layout,
@@ -547,12 +646,12 @@
         font-size:11px;
       }
 
-      .num-step{
-        grid-template-columns:26px 1fr 26px;
+      .picker-display{
+        font-size:28px;
       }
 
-      .num-step button{
-        height:28px;
+      .picker-row{
+        font-size:22px;
       }
     }
   </style>
@@ -690,11 +789,7 @@
 
               <div class="mini-field-wrap">
                 <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
-                <div class="num-step">
-                  <button type="button" data-step-target="btc200wmaInput" data-step-dir="-1">−</button>
-                  <input id="btc200wmaInput" type="number" step="0.01" placeholder="Enter value">
-                  <button type="button" data-step-target="btc200wmaInput" data-step-dir="1">+</button>
-                </div>
+                <input class="mini-field money-picker-target" id="btc200wmaInput" type="number" step="1" inputmode="numeric" placeholder="Enter value">
               </div>
 
               <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
@@ -786,6 +881,30 @@
     </div>
   </div>
 
+  <div id="moneyPickerOverlay" class="picker-overlay hidden" aria-hidden="true">
+    <div class="picker-sheet">
+      <div class="picker-head">
+        <button class="picker-btn" id="pickerCancelBtn" type="button">Cancel</button>
+        <div class="picker-title" id="pickerTitle">Choose amount</div>
+        <button class="picker-btn" id="pickerDoneBtn" type="button">Done</button>
+      </div>
+      <div class="picker-body">
+        <div class="picker-display" id="pickerDisplay">£0</div>
+        <div class="picker-wheel-wrap">
+          <div class="picker-highlight"></div>
+          <div class="picker-wheel" id="pickerWheel"></div>
+        </div>
+        <div class="picker-quick">
+          <button class="picker-chip" type="button" data-picker-jump="-100">-100</button>
+          <button class="picker-chip" type="button" data-picker-jump="-10">-10</button>
+          <button class="picker-chip" type="button" data-picker-jump="10">+10</button>
+          <button class="picker-chip" type="button" data-picker-jump="100">+100</button>
+          <button class="picker-chip" type="button" data-picker-set="0">Set 0</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     function monthKeyFromDate(d) {
       return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -856,43 +975,9 @@
       return Number.isFinite(n) ? n : 0;
     }
 
-    function decimalsFromStep(stepValue) {
-      const s = String(stepValue || "1");
-      if (!s.includes(".")) return 0;
-      return s.split(".")[1].length;
-    }
-
-    function formatNumberForInput(num, stepValue) {
-      const decimals = decimalsFromStep(stepValue);
-      return String(Number(num.toFixed(decimals)));
-    }
-
-    function numericInputHtml({ value, step, dataType, dataIndex, dataField, readOnly=false, inputId="" }) {
-      const attrs = [
-        inputId ? `id="${inputId}"` : "",
-        `type="number"`,
-        `step="${step}"`,
-        value === "" ? `value=""` : `value="${value}"`,
-        dataType ? `data-type="${dataType}"` : "",
-        dataIndex !== undefined ? `data-index="${dataIndex}"` : "",
-        dataField ? `data-field="${dataField}"` : "",
-        readOnly ? `readonly` : ""
-      ].filter(Boolean).join(" ");
-
-      const minusAttrs = inputId
-        ? `data-step-target="${inputId}" data-step-dir="-1"`
-        : `data-step-dir="-1"`;
-      const plusAttrs = inputId
-        ? `data-step-target="${inputId}" data-step-dir="1"`
-        : `data-step-dir="1"`;
-
-      return `
-        <div class="num-step">
-          <button type="button" ${minusAttrs}>−</button>
-          <input ${attrs}>
-          <button type="button" ${plusAttrs}>+</button>
-        </div>
-      `;
+    function normalizeMoneyValue(value) {
+      if (value === "" || value === null || value === undefined) return "";
+      return Math.round(safeNumber(value));
     }
 
     function normalizeRow(row, prefix) {
@@ -973,6 +1058,15 @@
     }
 
     let state = loadState();
+
+    const moneyPicker = {
+      target: null,
+      currentValue: 0,
+      min: -100000,
+      max: 1000000,
+      step: 1,
+      title: "Choose amount"
+    };
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1086,6 +1180,14 @@
       return rows;
     }
 
+    function isMoneyField(type, field) {
+      if (type === "income" && field === "amount") return true;
+      if (type === "expenses" && field === "amount") return true;
+      if (type === "liabilities" && field === "amount") return true;
+      if (type === "assets" && field === "unitPrice") return true;
+      return false;
+    }
+
     function renderIncomeExpenseTable(tbodyId, rows, type) {
       const tbody = document.getElementById(tbodyId);
       if (!rows.length) {
@@ -1096,13 +1198,7 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="${type}" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
-          <td>${numericInputHtml({
-            value: row.amount === 0 ? "" : row.amount,
-            step: "0.01",
-            dataType: type,
-            dataIndex: index,
-            dataField: "amount"
-          })}</td>
+          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type}" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1122,31 +1218,8 @@
         return `
           <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
-            <td>${numericInputHtml({
-              value: row.quantity === "" ? "" : row.quantity,
-              step: "0.00000001",
-              dataType: "assets",
-              dataIndex: index,
-              dataField: "quantity"
-            })}</td>
-            <td>${
-              bitcoin
-                ? numericInputHtml({
-                    value: state.btc200wma === "" ? "" : state.btc200wma,
-                    step: "0.01",
-                    dataType: "assets",
-                    dataIndex: index,
-                    dataField: "unitPrice",
-                    readOnly: true
-                  })
-                : numericInputHtml({
-                    value: row.unitPrice === "" ? "" : row.unitPrice,
-                    step: "0.01",
-                    dataType: "assets",
-                    dataIndex: index,
-                    dataField: "unitPrice"
-                  })
-            }</td>
+            <td><input type="number" step="0.00000001" inputmode="decimal" value="${row.quantity === "" ? "" : row.quantity}" data-type="assets" data-index="${index}" data-field="quantity"></td>
+            <td><input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}></td>
             <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -1164,13 +1237,7 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
-          <td>${numericInputHtml({
-            value: row.amount === 0 ? "" : row.amount,
-            step: "0.01",
-            dataType: "liabilities",
-            dataIndex: index,
-            dataField: "amount"
-          })}</td>
+          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1188,10 +1255,10 @@
       if (priceInput) {
         if (bitcoin) {
           priceInput.readOnly = true;
-          priceInput.value = state.btc200wma === "" ? "" : state.btc200wma;
+          priceInput.value = state.btc200wma === "" ? "" : Math.round(state.btc200wma);
         } else {
           priceInput.readOnly = false;
-          priceInput.value = row.unitPrice === "" ? "" : row.unitPrice;
+          priceInput.value = row.unitPrice === "" ? "" : Math.round(row.unitPrice);
         }
       }
 
@@ -1224,7 +1291,7 @@
 
       const btcInput = document.getElementById("btc200wmaInput");
       if (btcInput) {
-        btcInput.value = state.btc200wma === "" ? "" : state.btc200wma;
+        btcInput.value = state.btc200wma === "" ? "" : Math.round(state.btc200wma);
       }
     }
 
@@ -1331,7 +1398,7 @@
           row.quantity = value === "" ? "" : safeNumber(value);
         } else if (field === "unitPrice") {
           if (!isBitcoinRow(row)) {
-            row.unitPrice = value === "" ? "" : safeNumber(value);
+            row.unitPrice = value === "" ? "" : Math.round(safeNumber(value));
           }
         } else {
           row[field] = value;
@@ -1339,7 +1406,11 @@
         row.amount = assetAmount(row);
         updateAssetRowUI(index);
       } else {
-        row[field] = field === "amount" ? safeNumber(value) : value;
+        if (field === "amount") {
+          row[field] = value === "" ? 0 : Math.round(safeNumber(value));
+        } else {
+          row[field] = value;
+        }
       }
 
       saveState();
@@ -1413,7 +1484,7 @@
     function downloadCsv(rows, filename) {
       const csv = rows.map(row =>
         row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-      ).join("\\n");
+      ).join("\n");
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -1426,13 +1497,120 @@
       URL.revokeObjectURL(url);
     }
 
+    function openMoneyPicker(targetInput) {
+      if (!targetInput) return;
+
+      const rawValue = targetInput.value === "" ? 0 : Math.round(safeNumber(targetInput.value));
+      moneyPicker.target = targetInput;
+      moneyPicker.currentValue = rawValue;
+      moneyPicker.title = getPickerTitle(targetInput);
+
+      document.getElementById("pickerTitle").textContent = moneyPicker.title;
+      document.getElementById("pickerDisplay").textContent = fmtMoney(rawValue);
+
+      buildPickerWheel(rawValue);
+      document.getElementById("moneyPickerOverlay").classList.remove("hidden");
+      document.getElementById("moneyPickerOverlay").setAttribute("aria-hidden", "false");
+    }
+
+    function closeMoneyPicker() {
+      document.getElementById("moneyPickerOverlay").classList.add("hidden");
+      document.getElementById("moneyPickerOverlay").setAttribute("aria-hidden", "true");
+      moneyPicker.target = null;
+    }
+
+    function getPickerTitle(input) {
+      if (input.id === "btc200wmaInput") return "Bitcoin 200WMA";
+      const field = input.dataset.field || "amount";
+      if (field === "unitPrice") return "Choose price";
+      return "Choose amount";
+    }
+
+    function buildPickerWheel(centerValue) {
+      const wheel = document.getElementById("pickerWheel");
+      const start = Math.max(moneyPicker.min, centerValue - 100);
+      const end = Math.min(moneyPicker.max, centerValue + 100);
+
+      let html = "";
+      for (let v = start; v <= end; v += moneyPicker.step) {
+        html += `<div class="picker-row${v === centerValue ? " active" : ""}" data-picker-value="${v}">${fmtMoney(v)}</div>`;
+      }
+      wheel.innerHTML = html;
+
+      requestAnimationFrame(() => {
+        const targetRow = wheel.querySelector(`[data-picker-value="${centerValue}"]`);
+        if (targetRow) {
+          const top = targetRow.offsetTop - 88;
+          wheel.scrollTop = top;
+          updatePickerActive();
+        }
+      });
+    }
+
+    function updatePickerActive() {
+      const wheel = document.getElementById("pickerWheel");
+      const rows = Array.from(wheel.querySelectorAll(".picker-row"));
+      if (!rows.length) return;
+
+      const center = wheel.scrollTop + (wheel.clientHeight / 2);
+      let best = rows[0];
+      let bestDist = Infinity;
+
+      rows.forEach(row => {
+        const rowCenter = row.offsetTop + (row.offsetHeight / 2);
+        const dist = Math.abs(center - rowCenter);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = row;
+        }
+      });
+
+      rows.forEach(r => r.classList.remove("active"));
+      best.classList.add("active");
+
+      const value = Math.round(safeNumber(best.dataset.pickerValue));
+      moneyPicker.currentValue = value;
+      document.getElementById("pickerDisplay").textContent = fmtMoney(value);
+    }
+
+    function scrollPickerToValue(value) {
+      const wheel = document.getElementById("pickerWheel");
+      const currentRows = Array.from(wheel.querySelectorAll(".picker-row"));
+      if (!currentRows.length) {
+        buildPickerWheel(value);
+        return;
+      }
+
+      const first = Math.round(safeNumber(currentRows[0].dataset.pickerValue));
+      const last = Math.round(safeNumber(currentRows[currentRows.length - 1].dataset.pickerValue));
+
+      if (value < first + 10 || value > last - 10) {
+        buildPickerWheel(value);
+        return;
+      }
+
+      const row = wheel.querySelector(`[data-picker-value="${value}"]`);
+      if (row) {
+        wheel.scrollTop = row.offsetTop - 88;
+        updatePickerActive();
+      }
+    }
+
+    function applyMoneyPickerValue() {
+      if (!moneyPicker.target) return;
+      const input = moneyPicker.target;
+      input.value = moneyPicker.currentValue === 0 ? "0" : String(moneyPicker.currentValue);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      closeMoneyPicker();
+    }
+
     document.addEventListener("input", function(e){
       const t = e.target;
 
       if (state.viewMode !== "month") return;
 
       if (t.id === "btc200wmaInput") {
-        state.btc200wma = t.value === "" ? "" : safeNumber(t.value);
+        state.btc200wma = t.value === "" ? "" : Math.round(safeNumber(t.value));
         recalcAssets(currentMonth());
         saveState();
         updateAllAssetRowUI();
@@ -1450,28 +1628,18 @@
       );
     });
 
+    document.addEventListener("focusin", function(e){
+      const t = e.target;
+      if (state.viewMode !== "month") return;
+      if (!t.matches("input.money-picker-target")) return;
+      if (t.readOnly) return;
+
+      t.blur();
+      openMoneyPicker(t);
+    });
+
     document.addEventListener("click", function(e){
       const t = e.target;
-
-      if (t.dataset.stepDir) {
-        let input = null;
-
-        if (t.dataset.stepTarget) {
-          input = document.getElementById(t.dataset.stepTarget);
-        } else {
-          const wrapper = t.closest(".num-step");
-          if (wrapper) input = wrapper.querySelector("input");
-        }
-
-        if (input && !input.readOnly) {
-          const dir = Number(t.dataset.stepDir);
-          const step = Number(input.step || 1);
-          const current = input.value === "" ? 0 : safeNumber(input.value);
-          const next = current + (dir * step);
-          input.value = formatNumberForInput(next, input.step || "1");
-          input.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      }
 
       if (t.id === "toggleViewBtn") {
         if (state.viewMode === "month") {
@@ -1529,12 +1697,46 @@
           exportYearCsv();
         }
       }
+
+      if (t.id === "pickerCancelBtn") {
+        closeMoneyPicker();
+      }
+
+      if (t.id === "pickerDoneBtn") {
+        applyMoneyPickerValue();
+      }
+
+      if (t.id === "moneyPickerOverlay") {
+        closeMoneyPicker();
+      }
+
+      if (t.dataset.pickerJump) {
+        const next = moneyPicker.currentValue + Number(t.dataset.pickerJump);
+        scrollPickerToValue(Math.max(moneyPicker.min, Math.min(moneyPicker.max, next)));
+      }
+
+      if (t.dataset.pickerSet !== undefined) {
+        scrollPickerToValue(Number(t.dataset.pickerSet));
+      }
+    });
+
+    let pickerScrollTimer = null;
+    document.getElementById("pickerWheel").addEventListener("scroll", function(){
+      updatePickerActive();
+      clearTimeout(pickerScrollTimer);
+      pickerScrollTimer = setTimeout(() => {
+        scrollPickerToValue(moneyPicker.currentValue);
+      }, 80);
     });
 
     document.getElementById("currencySelect").addEventListener("change", function(e){
       state.currency = e.target.value;
       saveState();
       render();
+      if (!document.getElementById("moneyPickerOverlay").classList.contains("hidden")) {
+        document.getElementById("pickerDisplay").textContent = fmtMoney(moneyPicker.currentValue);
+        buildPickerWheel(moneyPicker.currentValue);
+      }
     });
 
     ensureMonthExists(state.selectedMonth);

@@ -1,3 +1,7 @@
+Paste this whole file over your current one.
+
+This version fixes the alignment issue by making the generated Rental income row use the same spacing and right-aligned number styling as the editable rows.
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -199,6 +203,8 @@
       border-radius:12px;
       -webkit-appearance:none;
       appearance:none;
+      font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     table{
@@ -253,12 +259,30 @@
     td input[type="number"]{
       text-align:right;
       min-width:0;
+      font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     td input[readonly]{
       color:#5c5c61;
       background:#f7f7f8;
       border-color:#ededf0;
+    }
+
+    .display-text{
+      display:block;
+      width:100%;
+      padding:8px 10px;
+      font-size:14px;
+      line-height:1.2;
+      color:var(--text);
+      font-family:inherit;
+      font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
+    }
+
+    .display-text.num{
+      text-align:right;
     }
 
     .money-picker-target{ cursor:pointer; }
@@ -268,6 +292,7 @@
       white-space:nowrap;
       font-size:14px;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .actions{
@@ -348,6 +373,7 @@
       font-weight:700;
       letter-spacing:-0.03em;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .summary-note{
@@ -388,6 +414,7 @@
       font-weight:700;
       letter-spacing:-0.03em;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .total-row td{
@@ -400,6 +427,7 @@
       text-align:right;
       white-space:nowrap;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .footer-summary{
@@ -433,6 +461,7 @@
       font-weight:700;
       letter-spacing:-0.03em;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .empty{
@@ -452,6 +481,7 @@
     .year-table td.num{
       text-align:right;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .hidden{ display:none !important; }
@@ -510,6 +540,7 @@
       letter-spacing:-.03em;
       padding:10px 0 14px;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .picker-wheel-wrap{
@@ -541,6 +572,7 @@
       font-size:24px;
       color:#7a7a80;
       font-variant-numeric:tabular-nums;
+      font-feature-settings:"tnum" 1;
     }
 
     .picker-row.active{
@@ -1158,8 +1190,8 @@
         if (row.synthetic) {
           return `
             <tr>
-              <td>${escapeHtml(row.description)}</td>
-              <td class="readonly-cell">${fmtMoney(row.amount)}</td>
+              <td><span class="display-text">${escapeHtml(row.description)}</span></td>
+              <td><span class="display-text num">${Math.round(row.amount)}</span></td>
               <td></td>
             </tr>
           `;
@@ -1722,3 +1754,5 @@
   </script>
 </body>
 </html>
+
+The important visual fix is that the generated row now uses the same padded block and tabular number alignment as the editable rows, so the amount column should sit neatly in line.

@@ -1,12 +1,15 @@
-Yes — here is the full one-paste version with those two changes:
-	•	covered checkboxes removed
-	•	a “% of expenses covered by passive income” line added under the Passive Income total
-	•	£ prefix added visually to:
-	•	asset price inputs
-	•	liability inputs
-	•	Bitcoin 200WMA input
+Paste this whole file over your current one.
 
-Paste this over your current file:
+It adds this rule:
+	•	any asset whose description contains REIT contributes 7% annually / 12 monthly to passive income
+
+So:
+	•	£12,000 in a REIT adds £70 monthly passive income
+	•	it is included in:
+	•	the Passive Income card
+	•	the % of expenses covered
+	•	the Year View passive income
+	•	the CSV export
 
 <!DOCTYPE html>
 <html lang="en">
@@ -286,26 +289,6 @@ Paste this over your current file:
       cursor:pointer;
     }
 
-    .money-wrap{
-      position:relative;
-    }
-
-    .money-wrap::before{
-      content:"£";
-      position:absolute;
-      left:10px;
-      top:50%;
-      transform:translateY(-50%);
-      color:var(--muted);
-      font-size:13px;
-      pointer-events:none;
-      z-index:2;
-    }
-
-    .money-wrap input{
-      padding-left:24px !important;
-    }
-
     .readonly-cell{
       text-align:right;
       white-space:nowrap;
@@ -490,10 +473,10 @@ Paste this over your current file:
     }
 
     .asset-desc-col{width:auto}
-    .asset-qty-col{width:50px}
-    .asset-price-col{width:88px}
-    .asset-total-col{width:108px}
-    .asset-action-col{width:58px}
+    .asset-qty-col{width:62px}
+    .asset-price-col{width:96px}
+    .asset-total-col{width:118px}
+    .asset-action-col{width:74px}
 
     .year-table th,
     .year-table td{
@@ -666,10 +649,10 @@ Paste this over your current file:
         font-size:24px;
       }
 
-      .asset-qty-col{width:44px}
-      .asset-price-col{width:78px}
-      .asset-total-col{width:90px}
-      .asset-action-col{width:54px}
+      .asset-qty-col{width:50px}
+      .asset-price-col{width:84px}
+      .asset-total-col{width:94px}
+      .asset-action-col{width:66px}
 
       .row-btn{
         padding:6px 8px;
@@ -722,7 +705,7 @@ Paste this over your current file:
                   <thead>
                     <tr>
                       <th>Description</th>
-                      <th style="width:160px;">Cash Flow</th>
+                      <th style="width:160px;">Cash Flow (£)</th>
                       <th style="width:74px;"></th>
                     </tr>
                   </thead>
@@ -746,7 +729,7 @@ Paste this over your current file:
                   <thead>
                     <tr>
                       <th>Description</th>
-                      <th style="width:160px;">Cash Flow</th>
+                      <th style="width:160px;">Cash Flow (£)</th>
                       <th style="width:74px;"></th>
                     </tr>
                   </thead>
@@ -802,7 +785,7 @@ Paste this over your current file:
                   <tr>
                     <th class="asset-desc-col">Description</th>
                     <th class="asset-qty-col">Qty</th>
-                    <th class="asset-price-col">Price</th>
+                    <th class="asset-price-col">Price (£)</th>
                     <th class="asset-total-col">Total</th>
                     <th class="asset-action-col"></th>
                   </tr>
@@ -818,10 +801,8 @@ Paste this over your current file:
               </table>
 
               <div class="mini-field-wrap">
-                <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
-                <div class="money-wrap">
-                  <input class="mini-field money-picker-target" id="btc200wmaInput" type="number" step="1" inputmode="numeric" placeholder="Enter value">
-                </div>
+                <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average (£)</label>
+                <input class="mini-field money-picker-target" id="btc200wmaInput" type="number" step="1" inputmode="numeric" placeholder="Enter value">
               </div>
 
               <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
@@ -835,7 +816,7 @@ Paste this over your current file:
                 <thead>
                   <tr>
                     <th>Description</th>
-                    <th style="width:160px;">Value</th>
+                    <th style="width:160px;">Value (£)</th>
                     <th style="width:74px;"></th>
                   </tr>
                 </thead>
@@ -1145,6 +1126,14 @@ Paste this over your current file:
       }, 0);
     }
 
+    function sumReitPassiveIncome(assets) {
+      return assets.reduce((sum, row) => {
+        const desc = String(row.description || "").toLowerCase();
+        if (!desc.includes("reit")) return sum;
+        return sum + (assetAmount(row) * 0.07 / 12);
+      }, 0);
+    }
+
     function escapeHtml(str) {
       return String(str ?? "")
         .replace(/&/g, "&amp;")
@@ -1175,7 +1164,8 @@ Paste this over your current file:
     function getMonthMetrics(monthKey) {
       const month = getMonthData(monthKey);
       const totalIncome = sumRows(month.income);
-      const passiveIncome = sumPassiveIncome(month.income);
+      const reitPassiveIncome = sumReitPassiveIncome(month.assets);
+      const passiveIncome = sumPassiveIncome(month.income) + reitPassiveIncome;
       const totalExpenses = sumRows(month.expenses);
       const totalAssets = sumRows(month.assets);
       const totalLiabilities = sumRows(month.liabilities);
@@ -1238,11 +1228,7 @@ Paste this over your current file:
           <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
             <td><input type="number" step="0.00000001" inputmode="decimal" value="${row.quantity === "" ? "" : row.quantity}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td>
-              <div class="money-wrap">
-                <input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}>
-              </div>
-            </td>
+            <td><input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}></td>
             <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -1260,11 +1246,7 @@ Paste this over your current file:
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
-          <td>
-            <div class="money-wrap">
-              <input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount">
-            </div>
-          </td>
+          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1301,10 +1283,11 @@ Paste this over your current file:
     function renderMonthTotals() {
       const month = currentMonth();
       const totalIncome = sumRows(month.income);
+      const reitPassiveIncome = sumReitPassiveIncome(month.assets);
+      const passiveIncome = sumPassiveIncome(month.income) + reitPassiveIncome;
       const totalExpenses = sumRows(month.expenses);
       const totalAssets = sumRows(month.assets);
       const totalLiabilities = sumRows(month.liabilities);
-      const passiveIncome = sumPassiveIncome(month.income);
       const coveragePct = totalExpenses > 0 ? Math.round((passiveIncome / totalExpenses) * 100) : 0;
 
       document.getElementById("passiveIncome").textContent = fmtMoney(passiveIncome);
@@ -1449,6 +1432,9 @@ Paste this over your current file:
     function exportMonthCsv() {
       const month = currentMonth();
       recalcAssets(month);
+      const reitPassiveIncome = sumReitPassiveIncome(month.assets);
+      const totalPassiveIncome = sumPassiveIncome(month.income) + reitPassiveIncome;
+      const totalExpenses = sumRows(month.expenses);
 
       const rows = [
         ["MONTH", state.selectedMonth],
@@ -1463,11 +1449,13 @@ Paste this over your current file:
         ["EXPENSES"],
         ["DESCRIPTION", "AMOUNT"],
         ...month.expenses.map(r => [r.description, r.amount]),
-        ["TOTAL EXPENSES", sumRows(month.expenses)],
+        ["TOTAL EXPENSES", totalExpenses],
         [],
-        ["PASSIVE INCOME", sumPassiveIncome(month.income)],
-        ["PERCENT OF EXPENSES COVERED BY PASSIVE INCOME", sumRows(month.expenses) > 0 ? Math.round((sumPassiveIncome(month.income) / sumRows(month.expenses)) * 100) + "%" : "0%"],
-        ["MONTHLY CASH FLOW", sumRows(month.income) - sumRows(month.expenses)],
+        ["PASSIVE INCOME FROM INCOME ROWS", sumPassiveIncome(month.income)],
+        ["PASSIVE INCOME FROM REITS", reitPassiveIncome],
+        ["TOTAL PASSIVE INCOME", totalPassiveIncome],
+        ["PERCENT OF EXPENSES COVERED BY PASSIVE INCOME", totalExpenses > 0 ? Math.round((totalPassiveIncome / totalExpenses) * 100) + "%" : "0%"],
+        ["MONTHLY CASH FLOW", sumRows(month.income) - totalExpenses],
         [],
         ["ASSETS"],
         ["DESCRIPTION", "QUANTITY", "PRICE", "TOTAL"],
@@ -1514,7 +1502,7 @@ Paste this over your current file:
     function downloadCsv(rows, filename) {
       const csv = rows.map(row =>
         row.map(cell => '"' + String(cell ?? "").replace(/"/g, '""') + '"').join(",")
-      ).join("\n");
+      ).join("\\n");
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);

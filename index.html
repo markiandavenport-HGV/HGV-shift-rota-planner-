@@ -1,3 +1,13 @@
+Yes — here is the full one-paste version with those two changes:
+	•	covered checkboxes removed
+	•	a “% of expenses covered by passive income” line added under the Passive Income total
+	•	£ prefix added visually to:
+	•	asset price inputs
+	•	liability inputs
+	•	Bitcoin 200WMA input
+
+Paste this over your current file:
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -236,8 +246,7 @@
       background:#fcfcfd;
     }
 
-    td input[type="text"],
-    td input[type="number"]{
+    td input{
       width:100%;
       border:1px solid transparent;
       background:transparent;
@@ -275,6 +284,26 @@
 
     .money-picker-target{
       cursor:pointer;
+    }
+
+    .money-wrap{
+      position:relative;
+    }
+
+    .money-wrap::before{
+      content:"£";
+      position:absolute;
+      left:10px;
+      top:50%;
+      transform:translateY(-50%);
+      color:var(--muted);
+      font-size:13px;
+      pointer-events:none;
+      z-index:2;
+    }
+
+    .money-wrap input{
+      padding-left:24px !important;
     }
 
     .readonly-cell{
@@ -606,32 +635,6 @@
       cursor:pointer;
     }
 
-    .covered-wrap{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-    }
-
-    .covered-check{
-      width:18px;
-      height:18px;
-      accent-color:var(--accent);
-      cursor:pointer;
-    }
-
-    .covered-badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:4px 8px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:700;
-      letter-spacing:.04em;
-      background:rgba(0,113,227,.08);
-      color:var(--accent);
-    }
-
     @media (max-width:1020px){
       .income-layout,
       .balance-layout,
@@ -744,7 +747,6 @@
                     <tr>
                       <th>Description</th>
                       <th style="width:160px;">Cash Flow</th>
-                      <th style="width:84px;">Covered</th>
                       <th style="width:74px;"></th>
                     </tr>
                   </thead>
@@ -753,7 +755,6 @@
                     <tr class="total-row">
                       <td>Total Expenses</td>
                       <td class="total-value" id="expenseTotalRow">£0</td>
-                      <td></td>
                       <td></td>
                     </tr>
                   </tfoot>
@@ -767,7 +768,7 @@
             <div class="summary-card">
               <div class="summary-label">Passive Income</div>
               <div class="summary-value" id="passiveIncome">£0</div>
-              <div class="summary-note">Cash flow from non-salary income.</div>
+              <div class="summary-note" id="passiveCoverageNote">Covers 0% of expenses.</div>
             </div>
 
             <div class="summary-card">
@@ -818,7 +819,9 @@
 
               <div class="mini-field-wrap">
                 <label class="mini-field-label" for="btc200wmaInput">Enter Bitcoin 200 Week Moving Average</label>
-                <input class="mini-field money-picker-target" id="btc200wmaInput" type="number" step="1" inputmode="numeric" placeholder="Enter value">
+                <div class="money-wrap">
+                  <input class="mini-field money-picker-target" id="btc200wmaInput" type="number" step="1" inputmode="numeric" placeholder="Enter value">
+                </div>
               </div>
 
               <button class="add-row" type="button" id="addAsset">+ Add Asset Row</button>
@@ -1012,15 +1015,6 @@
       };
     }
 
-    function normalizeExpenseRow(row) {
-      return {
-        id: row && row.id ? row.id : uid("exp"),
-        description: row && typeof row.description === "string" ? row.description : "",
-        amount: row && row.amount !== undefined && row.amount !== null && row.amount !== "" ? safeNumber(row.amount) : 0,
-        covered: !!(row && row.covered)
-      };
-    }
-
     function migrateAssetRow(row) {
       if (!row) return blankAssetRow();
 
@@ -1053,7 +1047,7 @@
     function normalizeMonth(month) {
       return {
         income: Array.isArray(month && month.income) ? month.income.map(r => normalizeRow(r, "inc")) : [],
-        expenses: Array.isArray(month && month.expenses) ? month.expenses.map(r => normalizeExpenseRow(r)) : [],
+        expenses: Array.isArray(month && month.expenses) ? month.expenses.map(r => normalizeRow(r, "exp")) : [],
         assets: Array.isArray(month && month.assets) ? month.assets.map(r => migrateAssetRow(r)) : [],
         liabilities: Array.isArray(month && month.liabilities) ? month.liabilities.map(r => normalizeRow(r, "lia")) : []
       };
@@ -1216,23 +1210,7 @@
     function renderIncomeExpenseTable(tbodyId, rows, type) {
       const tbody = document.getElementById(tbodyId);
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty">No rows yet.</td></tr>';
-        return;
-      }
-
-      if (type === "expenses") {
-        tbody.innerHTML = rows.map((row, index) => `
-          <tr data-row-type="${type}" data-row-index="${index}">
-            <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
-            <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type}" data-index="${index}" data-field="amount"></td>
-            <td>
-              <div class="covered-wrap">
-                <input class="covered-check" type="checkbox" ${row.covered ? "checked" : ""} data-type="${type}" data-index="${index}" data-field="covered">
-              </div>
-            </td>
-            <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
-          </tr>
-        `).join("");
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">No rows yet.</td></tr>';
         return;
       }
 
@@ -1260,7 +1238,11 @@
           <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
             <td><input type="number" step="0.00000001" inputmode="decimal" value="${row.quantity === "" ? "" : row.quantity}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td><input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}></td>
+            <td>
+              <div class="money-wrap">
+                <input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}>
+              </div>
+            </td>
             <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -1278,7 +1260,11 @@
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
-          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type="liabilities"}" data-index="${index}" data-field="amount"></td>
+          <td>
+            <div class="money-wrap">
+              <input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount">
+            </div>
+          </td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1319,8 +1305,10 @@
       const totalAssets = sumRows(month.assets);
       const totalLiabilities = sumRows(month.liabilities);
       const passiveIncome = sumPassiveIncome(month.income);
+      const coveragePct = totalExpenses > 0 ? Math.round((passiveIncome / totalExpenses) * 100) : 0;
 
       document.getElementById("passiveIncome").textContent = fmtMoney(passiveIncome);
+      document.getElementById("passiveCoverageNote").textContent = `Covers ${coveragePct}% of expenses.`;
       document.getElementById("totalIncome").textContent = fmtMoney(totalIncome);
       document.getElementById("totalExpenses").textContent = fmtMoney(totalExpenses);
       document.getElementById("cashflow").textContent = fmtMoney(totalIncome - totalExpenses);
@@ -1417,8 +1405,6 @@
     function addRow(type) {
       if (type === "assets") {
         currentMonth().assets.push(blankAssetRow());
-      } else if (type === "expenses") {
-        currentMonth().expenses.push({ id: uid("exp"), description: "", amount: 0, covered: false });
       } else {
         currentMonth()[type].push({ id: uid(type.slice(0, 3)), description: "", amount: 0 });
       }
@@ -1432,7 +1418,7 @@
       render();
     }
 
-    function updateFieldWithoutRerender(type, index, field, value, checkedValue = null) {
+    function updateFieldWithoutRerender(type, index, field, value) {
       const row = currentMonth()[type][index];
       if (!row) return;
 
@@ -1448,8 +1434,6 @@
         }
         row.amount = assetAmount(row);
         updateAssetRowUI(index);
-      } else if (type === "expenses" && field === "covered") {
-        row.covered = !!checkedValue;
       } else {
         if (field === "amount") {
           row[field] = value === "" ? 0 : Math.round(safeNumber(value));
@@ -1477,11 +1461,12 @@
         ["TOTAL INCOME", sumRows(month.income)],
         [],
         ["EXPENSES"],
-        ["DESCRIPTION", "AMOUNT", "COVERED BY PASSIVE INCOME"],
-        ...month.expenses.map(r => [r.description, r.amount, r.covered ? "YES" : "NO"]),
+        ["DESCRIPTION", "AMOUNT"],
+        ...month.expenses.map(r => [r.description, r.amount]),
         ["TOTAL EXPENSES", sumRows(month.expenses)],
         [],
         ["PASSIVE INCOME", sumPassiveIncome(month.income)],
+        ["PERCENT OF EXPENSES COVERED BY PASSIVE INCOME", sumRows(month.expenses) > 0 ? Math.round((sumPassiveIncome(month.income) / sumRows(month.expenses)) * 100) + "%" : "0%"],
         ["MONTHLY CASH FLOW", sumRows(month.income) - sumRows(month.expenses)],
         [],
         ["ASSETS"],
@@ -1670,20 +1655,6 @@
         Number(t.dataset.index),
         t.dataset.field,
         t.value
-      );
-    });
-
-    document.addEventListener("change", function(e){
-      const t = e.target;
-      if (state.viewMode !== "month") return;
-      if (!t.matches('input[type="checkbox"][data-field="covered"]')) return;
-
-      updateFieldWithoutRerender(
-        t.dataset.type,
-        Number(t.dataset.index),
-        t.dataset.field,
-        "",
-        t.checked
       );
     });
 

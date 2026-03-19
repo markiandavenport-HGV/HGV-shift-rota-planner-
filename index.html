@@ -1,6 +1,7 @@
 Paste this whole file over your current one.
 
-This version fixes the alignment issue by making the generated Rental income row use the same spacing and right-aligned number styling as the editable rows.
+This version keeps everything the same, but asset price fields are now directly editable by keyboard.
+Only the Bitcoin price stays read-only, because it comes from the Bitcoin 200-week moving average field.
 
 <!DOCTYPE html>
 <html lang="en">
@@ -1222,7 +1223,7 @@ This version fixes the alignment issue by making the generated Rental income row
           <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
             <td><input type="number" step="0.00000001" inputmode="decimal" value="${row.quantity === "" ? "" : row.quantity}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td><input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}></td>
+            <td><input type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}></td>
             <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -1754,5 +1755,3 @@ This version fixes the alignment issue by making the generated Rental income row
   </script>
 </body>
 </html>
-
-The important visual fix is that the generated row now uses the same padded block and tabular number alignment as the editable rows, so the amount column should sit neatly in line.

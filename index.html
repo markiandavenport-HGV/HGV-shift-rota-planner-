@@ -1,12 +1,3 @@
-Yes — that’s the cleanest fix.
-
-I’ve made the asset price (£) field use the Apple-style spin wheel, so:
-	•	asset quantity stays directly editable
-	•	asset price (£) opens the picker
-	•	Bitcoin price stays read-only and still comes from the Bitcoin 200-week moving average box
-
-Paste this whole file over your current one:
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -869,11 +860,11 @@ Paste this whole file over your current one:
     <div class="picker-sheet">
       <div class="picker-head">
         <button class="picker-btn" id="pickerCancelBtn" type="button">Cancel</button>
-        <div class="picker-title" id="pickerTitle">Choose amount</div>
+        <div class="picker-title" id="pickerTitle">Choose value</div>
         <button class="picker-btn" id="pickerDoneBtn" type="button">Done</button>
       </div>
       <div class="picker-body">
-        <div class="picker-display" id="pickerDisplay">£0</div>
+        <div class="picker-display" id="pickerDisplay">0</div>
         <div class="picker-wheel-wrap">
           <div class="picker-highlight"></div>
           <div class="picker-wheel" id="pickerWheel"></div>
@@ -909,7 +900,8 @@ Paste this whole file over your current one:
       min: -100000,
       max: 1000000,
       step: 1,
-      title: "Choose amount"
+      title: "Choose value",
+      mode: "money"
     };
 
     function monthKeyFromDate(d) {
@@ -1085,6 +1077,10 @@ Paste this whole file over your current one:
       ).format(Number(n || 0));
     }
 
+    function fmtPlain(n) {
+      return String(Math.round(Number(n || 0)));
+    }
+
     function sumRows(rows) {
       return rows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
     }
@@ -1205,7 +1201,7 @@ Paste this whole file over your current one:
         return `
           <tr data-row-type="${type}" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="${type}" data-index="${index}" data-field="description"></td>
-            <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type}" data-index="${index}" data-field="amount"></td>
+            <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="${type}" data-index="${index}" data-field="amount" data-picker-mode="money"></td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="${type}" data-delete-index="${index}">Delete</button></td>
           </tr>
         `;
@@ -1226,8 +1222,8 @@ Paste this whole file over your current one:
         return `
           <tr data-row-type="assets" data-row-index="${index}">
             <td><input type="text" value="${escapeHtml(row.description)}" data-type="assets" data-index="${index}" data-field="description"></td>
-            <td><input type="number" step="0.00000001" inputmode="decimal" value="${row.quantity === "" ? "" : row.quantity}" data-type="assets" data-index="${index}" data-field="quantity"></td>
-            <td><input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" ${bitcoin ? "readonly" : ""}></td>
+            <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.quantity === "" ? "" : Math.round(row.quantity)}" data-type="assets" data-index="${index}" data-field="quantity" data-picker-mode="plain"></td>
+            <td><input class="${bitcoin ? "" : "money-picker-target"}" type="number" step="1" inputmode="numeric" value="${bitcoin ? (state.btc200wma === "" ? "" : Math.round(state.btc200wma)) : (row.unitPrice === "" ? "" : Math.round(row.unitPrice))}" data-type="assets" data-index="${index}" data-field="unitPrice" data-picker-mode="money" ${bitcoin ? "readonly" : ""}></td>
             <td class="readonly-cell" data-asset-total="${index}">${fmtMoney(total)}</td>
             <td class="actions"><button class="row-btn" type="button" data-delete-type="assets" data-delete-index="${index}">Delete</button></td>
           </tr>
@@ -1245,7 +1241,7 @@ Paste this whole file over your current one:
       tbody.innerHTML = rows.map((row, index) => `
         <tr data-row-type="liabilities" data-row-index="${index}">
           <td><input type="text" value="${escapeHtml(row.description)}" data-type="liabilities" data-index="${index}" data-field="description"></td>
-          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount"></td>
+          <td><input class="money-picker-target" type="number" step="1" inputmode="numeric" value="${row.amount === 0 ? "" : Math.round(row.amount)}" data-type="liabilities" data-index="${index}" data-field="amount" data-picker-mode="money"></td>
           <td class="actions"><button class="row-btn" type="button" data-delete-type="liabilities" data-delete-index="${index}">Delete</button></td>
         </tr>
       `).join("");
@@ -1256,9 +1252,14 @@ Paste this whole file over your current one:
       const tr = document.querySelector(`tr[data-row-type="assets"][data-row-index="${index}"]`);
       if (!row || !tr) return;
 
+      const qtyInput = tr.querySelector('input[data-field="quantity"]');
       const priceInput = tr.querySelector('input[data-field="unitPrice"]');
       const totalCell = tr.querySelector(`[data-asset-total="${index}"]`);
       const bitcoin = isBitcoinRow(row);
+
+      if (qtyInput) {
+        qtyInput.value = row.quantity === "" ? "" : Math.round(row.quantity);
+      }
 
       if (priceInput) {
         if (bitcoin) {
@@ -1408,7 +1409,7 @@ Paste this whole file over your current one:
 
       if (type === "assets") {
         if (field === "quantity") {
-          row.quantity = value === "" ? "" : safeNumber(value);
+          row.quantity = value === "" ? "" : Math.round(safeNumber(value));
         } else if (field === "unitPrice") {
           if (!isBitcoinRow(row)) {
             row.unitPrice = value === "" ? "" : Math.round(safeNumber(value));
@@ -1525,9 +1526,10 @@ Paste this whole file over your current one:
       moneyPicker.target = targetInput;
       moneyPicker.currentValue = rawValue;
       moneyPicker.title = getPickerTitle(targetInput);
+      moneyPicker.mode = targetInput.dataset.pickerMode || "money";
 
       document.getElementById("pickerTitle").textContent = moneyPicker.title;
-      document.getElementById("pickerDisplay").textContent = fmtMoney(rawValue);
+      document.getElementById("pickerDisplay").textContent = moneyPicker.mode === "money" ? fmtMoney(rawValue) : fmtPlain(rawValue);
 
       buildPickerWheel(rawValue);
       document.getElementById("moneyPickerOverlay").classList.remove("hidden");
@@ -1544,7 +1546,12 @@ Paste this whole file over your current one:
       if (input.id === "btc200wmaInput") return "Bitcoin 200WMA";
       const field = input.dataset.field || "amount";
       if (field === "unitPrice") return "Choose price";
+      if (field === "quantity") return "Choose quantity";
       return "Choose amount";
+    }
+
+    function formatPickerValue(value) {
+      return moneyPicker.mode === "money" ? fmtMoney(value) : fmtPlain(value);
     }
 
     function buildPickerWheel(centerValue) {
@@ -1554,7 +1561,7 @@ Paste this whole file over your current one:
 
       let html = "";
       for (let v = start; v <= end; v += moneyPicker.step) {
-        html += `<div class="picker-row${v === centerValue ? " active" : ""}" data-picker-value="${v}">${fmtMoney(v)}</div>`;
+        html += `<div class="picker-row${v === centerValue ? " active" : ""}" data-picker-value="${v}">${formatPickerValue(v)}</div>`;
       }
       wheel.innerHTML = html;
 
@@ -1590,7 +1597,7 @@ Paste this whole file over your current one:
 
       const value = Math.round(safeNumber(best.dataset.pickerValue));
       moneyPicker.currentValue = value;
-      document.getElementById("pickerDisplay").textContent = fmtMoney(value);
+      document.getElementById("pickerDisplay").textContent = formatPickerValue(value);
     }
 
     function scrollPickerToValue(value) {
@@ -1746,7 +1753,7 @@ Paste this whole file over your current one:
       saveState();
       render();
       if (!document.getElementById("moneyPickerOverlay").classList.contains("hidden")) {
-        document.getElementById("pickerDisplay").textContent = fmtMoney(moneyPicker.currentValue);
+        document.getElementById("pickerDisplay").textContent = formatPickerValue(moneyPicker.currentValue);
         buildPickerWheel(moneyPicker.currentValue);
       }
     });
